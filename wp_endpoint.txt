@@ -1,0 +1,155 @@
+Okay, creating an AI agent to manage a WordPress site is an ambitious and exciting project! To help you identify the necessary API endpoints, I've categorized them based on the core functions you mentioned: designing, creating, updating, and maintaining the website.
+
+This list prioritizes the standard WordPress Core (`wp/v2`) endpoints for fundamental operations, supplemented by Jetpack and WordPress.com endpoints for extended functionalities, especially around AI assistance, advanced media, backups, and security.
+
+Please note that `(?P<name>...)` in the paths are placeholders for dynamic values like IDs, slugs, or specific parameters.
+
+Here's a list of endpoints your AI agent might need:
+
+**I. Foundational & Batch Operations:**
+
+*   `GET /`: (Root) For API discovery, understanding capabilities.
+*   `POST /batch/v1`: (Root) To perform multiple operations in a single request, which can be very efficient for an AI.
+
+**II. Designing the Website:**
+
+*   **Themes & Styling:**
+    *   `GET /wp/v2/themes`: (WP Core) List available themes.
+    *   `GET /wp/v2/themes/(?P<stylesheet>[^\\/:<>\\*\\?\"\\|]+(?:\\/[^\\/:<>\\*\\?\"\\|]+)?)`: (WP Core) Get details of a specific theme. (Note: Activating themes via API is typically complex and might require site-level permissions beyond standard user roles).
+    *   `GET, POST, PUT, PATCH /wp/v2/global-styles/(?P<id>[\\/\\w-]+)`: (WP Core) Manage global theme styles (e.g., fonts, colors).
+    *   `GET, POST /jetpack-global-styles/v1/options`: (Jetpack) Manage Jetpack-specific global style options.
+    *   `POST /jetpack/v4/import/custom-css`: (Jetpack) Import custom CSS.
+*   **Templates & Structure:**
+    *   `GET, POST /wp/v2/templates`: (WP Core) List and create block theme templates.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/templates/(?P<id>([^\\/:<>\\*\\?\"\\|]+(?:\\/[^\\/:<>\\*\\?\"\\|]+)?)[\\/\\w%-]+)`: (WP Core) Manage specific block theme templates.
+    *   `GET, POST /wp/v2/template-parts`: (WP Core) List and create block theme template parts.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/template-parts/(?P<id>([^\\/:<>\\*\\?\"\\|]+(?:\\/[^\\/:<>\\*\\?\"\\|]+)?)[\\/\\w%-]+)`: (WP Core) Manage specific block theme template parts.
+    *   `POST /jetpack/v4/import/templates`: (Jetpack) Import templates.
+    *   `POST /jetpack/v4/import/template-parts`: (Jetpack) Import template parts.
+*   **Navigation / Menus:**
+    *   `GET, POST /wp/v2/menus`: (WP Core) List and create menus.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/menus/(?P<id>[\\d]+)`: (WP Core) Manage a specific menu.
+    *   `GET, POST /wp/v2/menu-items`: (WP Core) List and create menu items.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/menu-items/(?P<id>[\\d]+)`: (WP Core) Manage a specific menu item.
+    *   `GET, POST /wp/v2/navigation`: (WP Core) List and create block-based navigation.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/navigation/(?P<id>[\\d]+)`: (WP Core) Manage block-based navigation.
+    *   `GET /wp/v2/menu-locations`: (WP Core) List available menu locations in the theme.
+    *   `POST /jetpack/v4/import/menus`: (Jetpack) Import menus.
+    *   `POST /jetpack/v4/import/menu-items`: (Jetpack) Import menu items.
+    *   `POST /jetpack/v4/import/navigation`: (Jetpack) Import navigation structures.
+*   **Fonts:**
+    *   `GET, POST /wp/v2/font-families`: (WP Core) Manage font families.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/font-families/(?P<id>[\\d]+)`: (WP Core) Manage a specific font family.
+    *   `GET, POST /wp/v2/font-families/(?P<font_family_id>[\\d]+)/font-faces`: (WP Core) Manage font faces for a family.
+*   **Block Editor & Patterns:**
+    *   `GET /wp-block-editor/v1/settings`: (WP Block Editor) Get editor settings.
+    *   `GET /wp-block-editor/v1/url-details`: (WP Block Editor) Get details for URLs (useful for link creation).
+    *   `GET /wp/v2/block-patterns/patterns`: (WP Core) List available block patterns.
+    *   `POST /jetpack/v4/import/blocks`: (Jetpack) Import reusable blocks.
+
+**III. Creating & Updating Content:**
+
+*   **Posts & Pages:**
+    *   `GET, POST /wp/v2/posts`: (WP Core) List and create posts.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/posts/(?P<id>[\\d]+)`: (WP Core) Manage a specific post.
+    *   `GET, POST /wp/v2/pages`: (WP Core) List and create pages.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/pages/(?P<id>[\\d]+)`: (WP Core) Manage a specific page.
+    *   `POST /jetpack/v4/import/posts`: (Jetpack) Import posts.
+    *   `POST /jetpack/v4/import/pages`: (Jetpack) Import pages.
+*   **Media (Images, Videos, etc.):**
+    *   `GET, POST /wp/v2/media`: (WP Core) List and upload media.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/media/(?P<id>[\\d]+)`: (WP Core) Manage specific media item (update metadata, delete).
+    *   `POST /wp/v2/media/(?P<id>[\\d]+)/post-process`: (WP Core) Trigger post-processing for media (e.g., video encoding).
+    *   `POST /wp/v2/media/(?P<id>[\\d]+)/edit`: (WP Core) Edit media metadata.
+    *   `POST /jetpack/v4/import/media`: (Jetpack) Import media.
+    *   `GET, POST, PUT, PATCH /videopress/v1/upload/(?P<attachment_id>\\d+)`: (VideoPress) Upload/manage VideoPress videos (often tied to media library uploads).
+    *   `GET, POST, PUT, PATCH /videopress/v1/settings`: (VideoPress) Configure VideoPress settings.
+    *   `POST /wpcom/v2/jetpack-ai/images/generations`: (WP.com) Generate images using Jetpack AI.
+    *   `POST /wpcom/v2/external-media/copy/(?P<service>google_photos|openverse|pexels)`: (WP.com) Copy media from external services.
+*   **Blocks (Reusable Content):**
+    *   `GET, POST /wp/v2/blocks`: (WP Core) List and create reusable blocks.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/blocks/(?P<id>[\\d]+)`: (WP Core) Manage a specific reusable block.
+*   **Taxonomies (Categories & Tags):**
+    *   `GET, POST /wp/v2/categories`: (WP Core) List and create categories.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/categories/(?P<id>[\\d]+)`: (WP Core) Manage a specific category.
+    *   `GET, POST /wp/v2/tags`: (WP Core) List and create tags.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/tags/(?P<id>[\\d]+)`: (WP Core) Manage a specific tag.
+    *   `POST /jetpack/v4/import/categories`: (Jetpack) Import categories.
+    *   `POST /jetpack/v4/import/tags`: (Jetpack) Import tags.
+*   **AI-Assisted Content:**
+    *   `POST, PUT, PATCH /jetpack/v4/jetpack-ai-jwt`: (Jetpack) Get JWT for Jetpack AI.
+    *   `GET /wpcom/v2/jetpack-ai/ai-assistant-feature`: (WP.com) Check AI assistant feature status.
+    *   `POST /wpcom/v2/jetpack-ai/completions`: (WP.com) Get text completions from Jetpack AI.
+*   **Comments (if AI handles moderation/responses):**
+    *   `GET, POST /wp/v2/comments`: (WP Core) List and create comments.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/comments/(?P<id>[\\d]+)`: (WP Core) Manage a specific comment.
+    *   `POST /jetpack/v4/import/comments`: (Jetpack) Import comments.
+*   **Custom Post Types (if applicable to your site, e.g., for products, feedback):**
+    *   `GET /wp/v2/types`: (WP Core) Discover available post types.
+    *   `GET, POST /wp/v2/jp_pay_product` & `GET, POST, PUT, PATCH, DELETE /wp/v2/jp_pay_product/(?P<id>[\\d]+)`: (WP Core) If managing Jetpack payment products.
+    *   `GET, POST /wp/v2/feedback` & `GET, POST, PUT, PATCH, DELETE /wp/v2/feedback/(?P<id>[\\d]+)`: (WP Core) If managing feedback forms.
+*   **Social Sharing (Jetpack/WP.com):**
+    *   `POST /jetpack/v4/publicize/(?P<postId>\\d+)`: (Jetpack) Publicize a post.
+    *   `GET, POST /wpcom/v2/publicize/connections`: (WP.com) Manage social media connections.
+    *   `POST, PUT, PATCH, DELETE /wpcom/v2/publicize/connections/(?P<connection_id>[0-9]+)`: (WP.com) Manage a specific social connection.
+    *   `POST /wpcom/v2/publicize/share-post/(?P<postId>\\d+)`: (WP.com) Share a post via WP.com publicize.
+
+**IV. Maintaining the Website:**
+
+*   **Site Settings:**
+    *   `GET, POST, PUT, PATCH /wp/v2/settings`: (WP Core) Manage core WordPress settings (site title, tagline, etc.).
+    *   `GET, POST, PUT, PATCH /jetpack/v4/settings`: (Jetpack) Manage general Jetpack settings.
+    *   `POST, PUT, PATCH /jetpack/v4/settings/(?P<slug>[a-z\\-]+)`: (Jetpack) Manage specific Jetpack module settings.
+*   **Plugins & Modules:**
+    *   `GET, POST /wp/v2/plugins`: (WP Core) List and potentially upload/install plugins.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/plugins/(?P<plugin>[^.\\/]+(?:\\/[^.\\/]+)?)`: (WP Core) Manage a specific plugin (activate, deactivate, update, delete).
+    *   `GET /jetpack/v4/module/all`: (Jetpack) List all Jetpack modules.
+    *   `POST, PUT, PATCH /jetpack/v4/module/all/active`: (Jetpack) Activate/deactivate multiple Jetpack modules.
+    *   `GET, POST, PUT, PATCH /jetpack/v4/module/(?P<slug>[a-z\\-]+)`: (Jetpack) Get details or settings for a specific Jetpack module.
+    *   `POST, PUT, PATCH /jetpack/v4/module/(?P<slug>[a-z\\-]+)/active`: (Jetpack) Activate/deactivate a specific Jetpack module.
+    *   `GET /jetpack/v4/updates/plugins`: (Jetpack) Check for plugin updates available via Jetpack.
+    *   `POST, PUT, PATCH /my-jetpack/v1/site/products/install`: (My Jetpack) Install Jetpack products.
+    *   `POST, PUT, PATCH /my-jetpack/v1/site/products/activate`: (My Jetpack) Activate Jetpack products.
+    *   `DELETE /my-jetpack/v1/site/products/deactivate`: (My Jetpack) Deactivate Jetpack products.
+*   **Backups (Jetpack):**
+    *   `GET /jetpack/v4/database-object/backup` (and other specific backup GETs for posts, comments, users etc.): Retrieve backup data.
+    *   `GET /jetpack/v4/site/backup/undo-event`: Get information about undo events.
+    *   `GET /my-jetpack/v1/site/backup/undo-event`: (My Jetpack) Similar undo event information.
+*   **Security (Jetpack & Akismet):**
+    *   `GET /jetpack/v4/scan`: (Jetpack) Manage Jetpack Scan.
+    *   `GET, POST, PUT, PATCH /jetpack/v4/waf`: (Jetpack) Manage Web Application Firewall settings.
+    *   `POST, PUT, PATCH /jetpack/v4/waf/update-rules`: (Jetpack) Update WAF rules.
+    *   `GET /my-jetpack/v1/site/protect/data`: (My Jetpack) Get Protect module data.
+    *   `GET, POST, PUT, PATCH /akismet/v1/settings`: (Akismet) Manage Akismet settings.
+    *   `GET /akismet/v1/stats`: (Akismet) Get spam stats.
+*   **Performance (Jetpack Boost):**
+    *   `POST, PUT, PATCH /jetpack-boost/v1/speed-scores` or `POST, PUT, PATCH /jetpack-boost/v1/speed-scores/refresh`: (Jetpack Boost) Manage/refresh speed scores.
+*   **Sync (Jetpack):**
+    *   `POST, PUT, PATCH /jetpack/v4/sync/full-sync`: (Jetpack) Initiate a full sync.
+    *   `GET /jetpack/v4/sync/status`: (Jetpack) Get sync status.
+    *   `GET, POST, PUT, PATCH /jetpack/v4/sync/settings`: (Jetpack) Manage sync settings.
+*   **Site Health:**
+    *   `GET /wp-site-health/v1/tests/background-updates`
+    *   `GET /wp-site-health/v1/tests/loopback-requests`
+    *   `GET /wp-site-health/v1/tests/https-status`
+    *   `GET /wp-site-health/v1/tests/dotorg-communication`
+    *   `GET /wp-site-health/v1/tests/authorization-header`
+    *   `GET /wp-site-health/v1/tests/page-cache`
+    *   (WP Site Health) Run various health checks; the AI could use these to monitor the site.
+*   **Users (if AI needs to manage its own access or attribute content):**
+    *   `GET, POST /wp/v2/users`: (WP Core) List and create users.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/users/(?P<id>[\\d]+)`: (WP Core) Manage a specific user.
+    *   `GET, POST, PUT, PATCH, DELETE /wp/v2/users/me`: (WP Core) Manage the currently authenticated user (the AI agent itself).
+*   **Widgets (if AI manages sidebar/footer content):**
+    *   `GET /wp/v2/sidebars` & `GET, POST, PUT, PATCH /wp/v2/sidebars/(?P<id>[\\w-]+)`: (WP Core)
+    *   `GET /wp/v2/widget-types` & `GET, POST /wp/v2/widgets` & `GET, POST, PUT, PATCH, DELETE /wp/v2/widgets/(?P<id>[\\w\\-]+)`: (WP Core)
+
+**Important Considerations:**
+
+*   **Authentication:** Your AI agent will need a robust way to authenticate with the WordPress API, likely using Application Passwords for `wp/v2` or OAuth2/tokens for Jetpack/WordPress.com services.
+*   **Permissions:** The user account associated with the AI agent must have the appropriate roles and capabilities to perform these actions.
+*   **Error Handling:** Implement comprehensive error handling to manage API rate limits, failures, and unexpected responses.
+*   **Specificity:** The exact endpoints you use will depend heavily on the specific features enabled on the WordPress site (e.g., if it's using block themes vs. classic themes, if Jetpack is installed and which modules are active).
+*   **Discovery:** Start with `GET /` and `GET /wp/v2` to discover what's available on the specific site your agent is interacting with.
+
+This list should give you a strong foundation for building your AI agent's capabilities. Good luck!
