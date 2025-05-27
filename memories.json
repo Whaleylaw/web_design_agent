@@ -1,0 +1,36 @@
+{
+  "memories::demo_user": {
+    "2c959420-e654-40eb-afb4-4358ae64374f": {
+      "content": "User's name is John.",
+      "type": "general",
+      "importance": 5,
+      "created_at": "2025-05-23T12:57:40.938356",
+      "access_count": 2,
+      "last_accessed": "2025-05-23T13:16:04.121518"
+    },
+    "352cca19-06e9-4597-9131-b724f78074d9": {
+      "content": "User works at WordPress Inc.",
+      "type": "general",
+      "importance": 5,
+      "created_at": "2025-05-23T12:57:40.939638",
+      "access_count": 1,
+      "last_accessed": "2025-05-23T12:58:04.431449"
+    },
+    "20773c43-e956-47b3-8942-205eb684b7a0": {
+      "content": "User's name is Aaron.",
+      "type": "general",
+      "importance": 5,
+      "created_at": "2025-05-23T13:01:37.384821",
+      "access_count": 1,
+      "last_accessed": "2025-05-23T13:16:04.123002"
+    },
+    "c4db9fe1-178b-4fc8-97f2-36d6e91a837c": {
+      "content": "User requested to add a test page.",
+      "type": "general",
+      "importance": 5,
+      "created_at": "2025-05-23T13:02:39.072995",
+      "access_count": 0,
+      "last_accessed": "2025-05-23T13:02:39.073006"
+    }
+  }
+}
