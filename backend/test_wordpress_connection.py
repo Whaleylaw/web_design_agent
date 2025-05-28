@@ -3,7 +3,7 @@
 
 import json
 import requests
-from wordpress_tools import WordPressAPI
+from .wordpress_tools import WordPressAPI
 
 def test_connection():
     """Test basic WordPress connection"""
