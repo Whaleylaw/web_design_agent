@@ -5,7 +5,7 @@ import json
 import re
 from typing import Optional, Dict, Any
 from langchain_core.tools import tool
-from wordpress_tools import api
+from .wordpress_tools import api
 
 @tool
 def wp_add_custom_css_to_page(page_id: int, css_rules: str) -> str:

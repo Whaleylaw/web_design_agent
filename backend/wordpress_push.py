@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 from datetime import datetime
 from bs4 import BeautifulSoup
 import difflib
-from wordpress_tools import WordPressAPI
+from .wordpress_tools import WordPressAPI
 
 class WordPressPush:
     """Push local changes back to WordPress"""

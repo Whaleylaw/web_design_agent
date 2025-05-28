@@ -19,7 +19,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver  
 from langgraph.store.memory import InMemoryStore
 from langgraph.store.base import BaseStore
-from persistent_store import PersistentJSONStore
+from .persistent_store import PersistentJSONStore
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langgraph.graph import StateGraph, MessagesState, START
 from langchain_core.runnables import RunnableConfig
@@ -143,10 +143,10 @@ def create_memory_tools(memory_manager: MemoryManager):
 def create_wordpress_tools():
     """Create tools for WordPress API interaction."""
     # Import all WordPress tools from the comprehensive module
-    from wordpress_tools import get_all_wordpress_tools
+    from .wordpress_tools import get_all_wordpress_tools
     
     # Import visual editing tools
-    from visual_editor_tools import (
+    from .visual_editor_tools import (
         wp_add_custom_css_to_page,
         wp_add_content_block_to_page,
         wp_get_page_structure,
@@ -154,7 +154,7 @@ def create_wordpress_tools():
     )
     
     # Import navigation tools
-    from navigation_tools import (
+    from .navigation_tools import (
         wp_navigate_to_page,
         wp_create_blank_page,
         wp_list_all_pages,
@@ -162,10 +162,10 @@ def create_wordpress_tools():
     )
     
     # Import coming soon tool
-    from disable_coming_soon_tool import wp_disable_coming_soon_mode
+    from .disable_coming_soon_tool import wp_disable_coming_soon_mode
     
     # Import local editing tools
-    from local_editing_tools import (
+    from .local_editing_tools import (
         read_local_page_html,
         edit_local_page_content,
         add_local_page_css,

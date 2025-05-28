@@ -9,7 +9,7 @@ import requests
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any
-from wordpress_tools import WordPressAPI
+from .wordpress_tools import WordPressAPI
 from bs4 import BeautifulSoup
 import re
 

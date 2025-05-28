@@ -17,10 +17,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Add current directory to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 # Import components
-from main import create_wordpress_memory_agent
+from backend.main import create_wordpress_memory_agent
 from langchain_core.messages import HumanMessage, AIMessage
 
 # Page config
@@ -170,7 +170,7 @@ def render_local_html(page_id):
 def check_changes():
     """Check if local files have changes"""
     try:
-        from wordpress_push import WordPressPush
+        from backend.wordpress_push import WordPressPush
         pusher = WordPressPush(st.session_state.clone_dir)
         changes = pusher.detect_changes()
         return changes

@@ -51,35 +51,28 @@ Edit `wp-sites.json` with your WordPress site credentials:
 #### Command Line Interface
 ```bash
 # Default: Run with in-memory persistence
-python main.py
+python backend/main.py
 
 # Run with SQLite persistence (saves conversations)
-python main.py sqlite
+python backend/main.py sqlite
 
 # View example interactions
-python main.py example
+python backend/main.py example
 ```
 
 #### Streamlit Web Interface
 
-**Option 1: Management Dashboard (streamlit_app.py)**
+**Local Canvas (frontend/streamlit_local_canvas.py) - Recommended**
 ```bash
-# Run the management-focused UI
-streamlit run streamlit_app.py
-```
-This interface provides WordPress management tools with a persistent chat sidebar.
-
-**Option 2: Visual Editor - Basic (streamlit_app_v2.py)**
-```bash
-# Run the basic visual editor
-streamlit run streamlit_app_v2.py
+# Run the local editing interface
+streamlit run frontend/streamlit_local_canvas.py
 ```
 
-**Option 3: Enhanced Visual Editor (streamlit_visual_editor_enhanced.py) - Recommended**
-```bash
-# Run the enhanced visual editor with Coming Soon mode handling
-streamlit run streamlit_visual_editor_enhanced.py
-```
+Legacy interfaces remain in the `old/` folder:
+
+- **Management Dashboard** – `old/streamlit_app.py`
+- **Visual Editor - Basic** – `old/streamlit_app_v2.py`
+- **Enhanced Visual Editor** – `old/streamlit_visual_editor_enhanced.py`
 
 The Enhanced Visual Editor provides a revolutionary way to edit your WordPress site:
 
@@ -276,7 +269,7 @@ The agent can be extended to support more WordPress endpoints listed in `wp_endp
 ### Persistence Options
 
 - **In-memory mode** (default): Conversations and memories last only for the current session
-- **SQLite mode** (`python main.py sqlite` or Streamlit UI): 
+- **SQLite mode** (`python backend/main.py sqlite` or Streamlit UI):
   - Conversation history saved to `memory_agent.db`
   - Long-term memories saved to `memories.json`
   - Both persist between sessions

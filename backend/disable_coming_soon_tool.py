@@ -2,7 +2,7 @@
 Tool to disable coming soon mode on WordPress site
 """
 from langchain_core.tools import tool
-from wordpress_tools import api
+from .wordpress_tools import api
 import json
 
 @tool
