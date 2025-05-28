@@ -4,7 +4,7 @@ Navigation tools for the WordPress Visual Editor
 import json
 from typing import Optional
 from langchain_core.tools import tool
-from wordpress_tools import api
+from .wordpress_tools import api
 
 @tool
 def wp_navigate_to_page(page_identifier: str) -> str:

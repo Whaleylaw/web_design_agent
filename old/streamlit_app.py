@@ -19,11 +19,11 @@ import time
 load_dotenv()
 
 # Add current directory to path for imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 # Import the agent components
-from main import create_wordpress_memory_agent
-from wordpress_tools import WordPressAPI
+from backend.main import create_wordpress_memory_agent
+from backend.wordpress_tools import WordPressAPI
 from langchain_core.messages import HumanMessage, AIMessage
 
 # Page configuration
