@@ -1,34 +1,46 @@
 {
   "site_url": "https://lawyerincorporated.com",
-  "cloned_at": "2025-05-23T16:16:05.386573",
+  "cloned_at": "2025-06-04T11:06:57.803384",
   "pages": {
+    "53": {
+      "title": "Happy",
+      "path": "pages/page_53/index.html",
+      "clone_path": "pages/page_53/clone.html",
+      "metadata": "pages/page_53/metadata.json"
+    },
     "21": {
       "title": "Finding a Lawyer NOW!",
       "path": "pages/page_21/index.html",
+      "clone_path": "pages/page_21/clone.html",
       "metadata": "pages/page_21/metadata.json"
     },
     "16": {
       "title": "Color Test",
       "path": "pages/page_16/index.html",
+      "clone_path": "pages/page_16/clone.html",
       "metadata": "pages/page_16/metadata.json"
     },
     "13": {
       "title": "Test &#8211; 2025-05-14",
       "path": "pages/page_13/index.html",
+      "clone_path": "pages/page_13/clone.html",
       "metadata": "pages/page_13/metadata.json"
     },
     "6": {
       "title": "Lawyer Incorporated",
       "path": "pages/page_6/index.html",
+      "clone_path": "pages/page_6/clone.html",
       "metadata": "pages/page_6/metadata.json"
     },
     "1": {
       "title": "About",
       "path": "pages/page_1/index.html",
+      "clone_path": "pages/page_1/clone.html",
       "metadata": "pages/page_1/metadata.json"
     }
   },
   "posts": {},
   "theme_css": "css/theme.css",
-  "custom_css": ""
+  "custom_css": "",
+  "version": "2.0"
 }

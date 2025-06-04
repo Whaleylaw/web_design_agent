@@ -49,9 +49,18 @@ class WordPressPush:
                         local_html = html_file.read_text()
                         soup = BeautifulSoup(local_html, 'html.parser')
                         
-                        # Extract just the content div
+                        # Extract content - try page-content div first, then body content
                         content_div = soup.find('div', class_='page-content')
-                        local_content = str(content_div) if content_div else ""
+                        if content_div:
+                            local_content = content_div.decode_contents()
+                        else:
+                            # Fallback: extract body content if no page-content div
+                            body = soup.find('body')
+                            if body:
+                                local_content = body.decode_contents()
+                            else:
+                                # Ultimate fallback: use entire HTML
+                                local_content = local_html
                         
                         # Compare content
                         if self.normalize_html(wp_content) != self.normalize_html(local_content):
@@ -137,14 +146,18 @@ class WordPressPush:
         local_html = html_file.read_text()
         soup = BeautifulSoup(local_html, 'html.parser')
         
-        # Extract content
+        # Extract content - try page-content div first, then body content
         content_div = soup.find('div', class_='page-content')
-        if not content_div:
-            print(f"Error: No content div found in {html_file}")
-            return False
-        
-        # Get inner HTML
-        new_content = content_div.decode_contents()
+        if content_div:
+            new_content = content_div.decode_contents()
+        else:
+            # Fallback: extract body content if no page-content div
+            body = soup.find('body')
+            if body:
+                new_content = body.decode_contents()
+            else:
+                print(f"Warning: No suitable content found in {html_file}")
+                return False
         
         # Check for custom CSS
         custom_css = ""

@@ -176,6 +176,18 @@ def wp_update_page(page_id: int, title: Optional[str] = None, content: Optional[
 
 
 @tool
+def wp_delete_page(page_id: int, force: bool = False) -> str:
+    """Delete a WordPress page.
+    
+    Args:
+        page_id: ID of the page to delete
+        force: If True, permanently delete. If False, move to trash.
+    """
+    params = {"force": force}
+    return api.request(f"/wp/v2/pages/{page_id}", "DELETE", params=params)
+
+
+@tool
 def wp_get_pages(status: str = "publish", per_page: int = 10, parent: Optional[int] = None) -> str:
     """Get WordPress pages."""
     params = {"status": status, "per_page": per_page}
@@ -463,6 +475,7 @@ def get_all_wordpress_tools():
         # Page Management
         wp_create_page,
         wp_update_page,
+        wp_delete_page,
         wp_get_pages,
         
         # Media

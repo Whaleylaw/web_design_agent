@@ -1,0 +1,410 @@
+[
+  {
+    "id": 1,
+    "timestamp": "2025-05-28T16:59:40.337521",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "update",
+    "description": "Updated file with 455 characters",
+    "pushed": true
+  },
+  {
+    "id": 2,
+    "timestamp": "2025-05-28T17:01:21.592430",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Finding a Lawyer NOW!' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 3,
+    "timestamp": "2025-05-28T17:01:21.593466",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Color Test' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 4,
+    "timestamp": "2025-05-28T17:01:21.594189",
+    "file_path": "wordpress_clone/pages/page_13/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Test &#8211; 2025-05-14' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 5,
+    "timestamp": "2025-05-28T17:01:21.594942",
+    "file_path": "wordpress_clone/pages/page_6/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Lawyer Incorporated' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 6,
+    "timestamp": "2025-05-28T17:01:21.597066",
+    "file_path": "wordpress_clone/pages/page_1/index.html",
+    "action": "clone",
+    "description": "Cloned page 'About' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 7,
+    "timestamp": "2025-05-28T17:01:23.220274",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Finding a Lawyer NOW!' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 8,
+    "timestamp": "2025-05-28T17:01:23.221563",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Color Test' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 9,
+    "timestamp": "2025-05-28T17:01:23.222455",
+    "file_path": "wordpress_clone/pages/page_13/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Test &#8211; 2025-05-14' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 10,
+    "timestamp": "2025-05-28T17:01:23.223562",
+    "file_path": "wordpress_clone/pages/page_6/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Lawyer Incorporated' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 11,
+    "timestamp": "2025-05-28T17:01:23.224520",
+    "file_path": "wordpress_clone/pages/page_1/index.html",
+    "action": "clone",
+    "description": "Cloned page 'About' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 12,
+    "timestamp": "2025-05-28T17:01:24.989455",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Finding a Lawyer NOW!' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 13,
+    "timestamp": "2025-05-28T17:01:24.990361",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Color Test' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 14,
+    "timestamp": "2025-05-28T17:01:24.991140",
+    "file_path": "wordpress_clone/pages/page_13/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Test &#8211; 2025-05-14' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 15,
+    "timestamp": "2025-05-28T17:01:24.992540",
+    "file_path": "wordpress_clone/pages/page_6/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Lawyer Incorporated' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 16,
+    "timestamp": "2025-05-28T17:01:24.993620",
+    "file_path": "wordpress_clone/pages/page_1/index.html",
+    "action": "clone",
+    "description": "Cloned page 'About' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 17,
+    "timestamp": "2025-05-28T17:01:26.796850",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Finding a Lawyer NOW!' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 18,
+    "timestamp": "2025-05-28T17:01:26.797825",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Color Test' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 19,
+    "timestamp": "2025-05-28T17:01:26.799324",
+    "file_path": "wordpress_clone/pages/page_13/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Test &#8211; 2025-05-14' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 20,
+    "timestamp": "2025-05-28T17:01:26.800868",
+    "file_path": "wordpress_clone/pages/page_6/index.html",
+    "action": "clone",
+    "description": "Cloned page 'Lawyer Incorporated' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 21,
+    "timestamp": "2025-05-28T17:01:26.802351",
+    "file_path": "wordpress_clone/pages/page_1/index.html",
+    "action": "clone",
+    "description": "Cloned page 'About' from WordPress",
+    "pushed": true
+  },
+  {
+    "id": 22,
+    "timestamp": "2025-05-28T17:02:21.640251",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "update",
+    "description": "Updated file with 455 characters",
+    "pushed": true
+  },
+  {
+    "id": 23,
+    "timestamp": "2025-05-28T17:42:46.098142",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 446 characters",
+    "pushed": true
+  },
+  {
+    "id": 24,
+    "timestamp": "2025-05-28T17:51:53.623453",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1383 characters",
+    "pushed": true
+  },
+  {
+    "id": 25,
+    "timestamp": "2025-05-28T17:52:41.628225",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1383 characters",
+    "pushed": true
+  },
+  {
+    "id": 26,
+    "timestamp": "2025-05-28T17:53:53.166610",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1574 characters",
+    "pushed": true
+  },
+  {
+    "id": 27,
+    "timestamp": "2025-05-28T17:54:33.755115",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1574 characters",
+    "pushed": true
+  },
+  {
+    "id": 28,
+    "timestamp": "2025-05-28T18:03:57.201363",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 452 characters",
+    "pushed": true
+  },
+  {
+    "id": 29,
+    "timestamp": "2025-05-28T18:06:14.625877",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1574 characters",
+    "pushed": true
+  },
+  {
+    "id": 30,
+    "timestamp": "2025-05-28T18:07:32.076280",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 783 characters",
+    "pushed": true
+  },
+  {
+    "id": 31,
+    "timestamp": "2025-05-30T15:56:43.391545",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1867 characters",
+    "pushed": true
+  },
+  {
+    "id": 32,
+    "timestamp": "2025-05-30T16:03:45.916021",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Finding a Lawyer NOW!' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 33,
+    "timestamp": "2025-05-31T11:16:02.472728",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1535 characters",
+    "pushed": true
+  },
+  {
+    "id": 34,
+    "timestamp": "2025-05-31T11:22:17.778035",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Finding a Lawyer NOW!' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 35,
+    "timestamp": "2025-06-02T11:01:59.471150",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Finding a Lawyer NOW!' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 36,
+    "timestamp": "2025-06-02T11:02:00.304824",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Color Test' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 37,
+    "timestamp": "2025-06-02T11:02:01.102007",
+    "file_path": "wordpress_clone/pages/page_13/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Test &#8211; 2025-05-14' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 38,
+    "timestamp": "2025-06-02T11:02:01.945557",
+    "file_path": "wordpress_clone/pages/page_6/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Lawyer Incorporated' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 39,
+    "timestamp": "2025-06-02T11:02:02.848288",
+    "file_path": "wordpress_clone/pages/page_1/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'About' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 40,
+    "timestamp": "2025-06-02T11:54:44.242690",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1621 characters",
+    "pushed": true
+  },
+  {
+    "id": 41,
+    "timestamp": "2025-06-02T12:02:36.460770",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Finding a Lawyer NOW!' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 42,
+    "timestamp": "2025-06-02T12:02:40.583271",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Finding a Lawyer NOW!' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 43,
+    "timestamp": "2025-06-02T12:05:37.534770",
+    "file_path": "wordpress_clone/pages/page_21/clone.html",
+    "action": "update",
+    "description": "Updated file with 1579 characters",
+    "pushed": true
+  },
+  {
+    "id": 44,
+    "timestamp": "2025-06-02T12:07:33.875324",
+    "file_path": "wordpress_clone/pages/page_21/index.html",
+    "action": "update",
+    "description": "Updated file with 1579 characters",
+    "pushed": true
+  },
+  {
+    "id": 45,
+    "timestamp": "2025-06-02T13:15:47.448278",
+    "file_path": "wordpress_clone/pages/page_16/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Color Test' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 46,
+    "timestamp": "2025-06-02T13:15:48.232194",
+    "file_path": "wordpress_clone/pages/page_13/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Test &#8211; 2025-05-14' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 47,
+    "timestamp": "2025-06-02T13:15:49.006798",
+    "file_path": "wordpress_clone/pages/page_6/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'Lawyer Incorporated' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 48,
+    "timestamp": "2025-06-02T13:15:49.908736",
+    "file_path": "wordpress_clone/pages/page_1/index.html",
+    "action": "pushed",
+    "description": "Successfully pushed 'About' to WordPress",
+    "pushed": true
+  },
+  {
+    "id": 49,
+    "timestamp": "2025-06-02T13:36:25.256904",
+    "file_path": "wordpress_clone/pages/page_53/index.html",
+    "action": "create",
+    "description": "Created file with 1523 characters",
+    "pushed": false
+  },
+  {
+    "id": 50,
+    "timestamp": "2025-06-02T13:36:29.173731",
+    "file_path": "wordpress_clone/pages/page_53/clone.html",
+    "action": "create",
+    "description": "Created file with 8 characters",
+    "pushed": false
+  },
+  {
+    "id": 51,
+    "timestamp": "2025-06-02T13:36:33.816505",
+    "file_path": "wordpress_clone/pages/page_53/metadata.json",
+    "action": "create",
+    "description": "Created file with 197 characters",
+    "pushed": false
+  }
+]

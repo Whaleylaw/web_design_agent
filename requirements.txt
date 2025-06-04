@@ -7,6 +7,7 @@ langgraph-checkpoint-sqlite==2.0.10
 # Environment and utilities
 python-dotenv>=1.0.0
 requests>=2.31.0
+beautifulsoup4>=4.13.0
 
 # Streamlit UI
 streamlit==1.41.1

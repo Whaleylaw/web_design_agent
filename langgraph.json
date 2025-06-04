@@ -1,0 +1,7 @@
+{
+    "dependencies": ["."],
+    "graphs": {
+        "web_design_agent": "./studio_app.py:graph"
+    },
+    "env": "./.env"
+} 

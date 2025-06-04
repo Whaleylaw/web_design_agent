@@ -3,8 +3,10 @@ Navigation tools for the WordPress Visual Editor
 """
 import json
 from typing import Optional
+from pathlib import Path
 from langchain_core.tools import tool
 from .wordpress_tools import api
+from datetime import datetime
 
 @tool
 def wp_navigate_to_page(page_identifier: str) -> str:
@@ -29,7 +31,9 @@ def wp_navigate_to_page(page_identifier: str) -> str:
             page_id = int(page_identifier)
             for page in pages:
                 if page["id"] == page_id:
-                    return f"Navigate to page: {page.get('title', {}).get('rendered', 'Untitled')} (ID: {page_id})"
+                    # Write navigation command to file for Streamlit to pick up
+                    _write_navigation_command(page_id)
+                    return f"✅ Navigated to page: {page.get('title', {}).get('rendered', 'Untitled')} (ID: {page_id})"
             return f"Page with ID {page_id} not found"
         
         # Search by title or keywords
@@ -37,11 +41,25 @@ def wp_navigate_to_page(page_identifier: str) -> str:
         for page in pages:
             page_title = page.get("title", {}).get("rendered", "").lower()
             if search_term in page_title or page_title in search_term:
-                return f"Navigate to page: {page.get('title', {}).get('rendered', 'Untitled')} (ID: {page['id']})"
+                page_id = page["id"]
+                # Write navigation command to file for Streamlit to pick up
+                _write_navigation_command(page_id)
+                return f"✅ Navigated to page: {page.get('title', {}).get('rendered', 'Untitled')} (ID: {page_id})"
         
         # Check if it's a home page request
         if any(word in search_term for word in ["home", "main", "index", "front"]):
-            return "Navigate to homepage"
+            # Find the first page or a page that looks like a homepage
+            if pages:
+                home_page = pages[0]  # Default to first page
+                for page in pages:
+                    title = page.get("title", {}).get("rendered", "").lower()
+                    if any(word in title for word in ["home", "main", "index", "front"]):
+                        home_page = page
+                        break
+                
+                page_id = home_page["id"]
+                _write_navigation_command(page_id)
+                return f"✅ Navigated to homepage: {home_page.get('title', {}).get('rendered', 'Untitled')} (ID: {page_id})"
         
         return f"Could not find a page matching '{page_identifier}'. Available pages: " + ", ".join([
             p.get("title", {}).get("rendered", "Untitled") for p in pages[:5]
@@ -49,6 +67,25 @@ def wp_navigate_to_page(page_identifier: str) -> str:
         
     except Exception as e:
         return f"Error navigating: {str(e)}"
+
+
+def _write_navigation_command(page_id: int):
+    """Write a navigation command to a file that Streamlit can monitor."""
+    try:
+        nav_file = Path("temp/navigation_command.json")
+        nav_file.parent.mkdir(exist_ok=True)
+        
+        command = {
+            "action": "navigate",
+            "page_id": page_id,
+            "timestamp": str(datetime.now().isoformat())
+        }
+        
+        with open(nav_file, 'w') as f:
+            json.dump(command, f)
+            
+    except Exception as e:
+        print(f"Warning: Could not write navigation command: {e}")
 
 
 @tool 
@@ -77,7 +114,10 @@ def wp_create_blank_page(title: str) -> str:
         page_id = page_data.get("id")
         page_title = page_data.get("title", {}).get("rendered", title)
         
-        return f"Created new blank page '{page_title}' (ID: {page_id}). Navigate to this page to start editing it."
+        # Navigate to the new page
+        _write_navigation_command(page_id)
+        
+        return f"✅ Created new blank page '{page_title}' (ID: {page_id}) and navigated to it. You can now start editing!"
         
     except Exception as e:
         return f"Error creating page: {str(e)}"
