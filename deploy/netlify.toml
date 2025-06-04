@@ -1,0 +1,30 @@
+[build]
+  # Directory that contains the deploy-ready HTML, CSS, JS files
+  publish = "public"
+  
+  # Build command (we'll add this later when we automate)
+  command = "echo 'Manual deploy - files are pre-built'"
+
+[build.environment]
+  # Node version (if needed later)
+  NODE_VERSION = "18"
+
+# Custom headers for better performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+# Redirect rules (if needed)
+# [[redirects]]
+#   from = "/old-page"
+#   to = "/new-page"
+#   status = 301 
