@@ -70,13 +70,10 @@ if "agent" not in st.session_state:
                         content = f.read()
                         st.session_state.working_page_content = content
                         st.session_state.last_update = str(time.time())
-                        # Debug info for initialization
-                        print(f"🔍 Initialized with {len(content)} characters for {main_page}")
+
                 except Exception as e:
-                    print(f"❌ Error reading working file during init: {e}")
                     st.session_state.working_page_content = None
             else:
-                print(f"❌ Working file not found during init: {working_file}")
                 st.session_state.working_page_content = None
         else:
             st.session_state.current_page = None
@@ -342,41 +339,7 @@ if "current_page" in st.session_state and st.session_state.current_page:
         with col_right:
             st.subheader(f"✏️ Working Version: {page_name}")
             
-            # Debug information
-            with st.expander("🔍 Debug Info", expanded=False):
-                st.write(f"**Session working content length:** {len(working_content) if working_content else 0} characters")
-                st.write(f"**Working file path:** {WORKING_DIR / f'{page_name.replace('/', '_')}.html'}")
-                st.write(f"**File exists:** {(WORKING_DIR / f'{page_name.replace('/', '_')}.html').exists()}")
-                if st.session_state.get('last_update'):
-                    st.write(f"**Last update:** {st.session_state.last_update}")
-                
-                # Show first 200 chars of content
-                if working_content:
-                    st.text_area("Content preview (first 200 chars):", working_content[:200], height=100)
-                    
-                    # Test if HTML is valid
-                    if working_content.strip().startswith('<!DOCTYPE') or working_content.strip().startswith('<html'):
-                        st.success("✅ Content appears to be valid HTML")
-                    else:
-                        st.warning("⚠️ Content may not be valid HTML")
-                    
-                    # Test iframe button
-                    if st.button("🧪 Test Iframe Display"):
-                        st.write("Testing iframe with simple content:")
-                        test_content = "<html><body><h1>Test Content</h1><p>This is a test.</p></body></html>"
-                        components.html(test_content, height=200, scrolling=True)
-                
-                # Force reload button
-                if st.button("🔄 Force Reload Working Version"):
-                    working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
-                    if working_file.exists():
-                        with open(working_file, 'r', encoding='utf-8') as f:
-                            new_content = f.read()
-                            st.session_state.working_page_content = new_content
-                            st.session_state.last_update = str(time.time())
-                            st.success("Reloaded!")
-                            st.rerun()
-            
+
             # Display working version in large iframe
             if working_content:
                 # Simple approach - just display the content with a unique comment at the end
