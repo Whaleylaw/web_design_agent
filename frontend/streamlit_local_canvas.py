@@ -714,11 +714,11 @@ def get_sync_status():
 # Main UI
 def main():
     # Add title
-    st.title("📝 WordPress Local Canvas")
+    st.title("📝 Local Website Editor")
     
     # Check if clone exists
     if not load_manifest():
-        st.warning("No local clone found. Click 'Clone Site' to download your WordPress pages.")
+        st.warning("No local pages found. Click 'Clone Site' to download your website pages.")
     
     # Set default page if none selected and pages exist
     if not st.session_state.current_page_id and st.session_state.pages_list:
@@ -814,8 +814,8 @@ def main():
                     st.session_state.messages.append({"role": "user", "content": clone_message})
                     st.rerun()
             with col3:
-                if st.button("📤", help="Push", use_container_width=True):
-                    push_message = "Use push_changes_v2 to push all local changes to WordPress"
+                if st.button("🚀", help="Deploy to Netlify", use_container_width=True):
+                    push_message = "Use deploy_all_to_netlify to deploy all pages to Netlify"
                     st.session_state.messages.append({"role": "user", "content": push_message})
                     # Force refresh after push
                     st.session_state.force_sync_refresh = True
@@ -1130,19 +1130,20 @@ def main():
         else:
             # Welcome message when no page is selected
             st.markdown("""
-            ## 🚀 Welcome to WordPress Local Canvas
+            ## 🚀 Welcome to Local Website Editor
             
             ### 🎯 Quick Start:
-            1. **📥 Clone** - Download pages from WordPress
+            1. **📥 Clone** - Download pages from your website
             2. **🔍 Select Page** - Choose from dropdown on the left
             3. **💬 Chat** - Tell the AI what to change
-            4. **📤 Push** - Upload changes when ready
+            4. **📤 Deploy** - Deploy changes to Netlify when ready
             
             ### 💬 Example Commands:
             - "Show me page 21"
             - "Change the background to blue"
             - "Add a contact form"
             - "Make the text larger"
+            - "Deploy this page to Netlify"
             """)
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ from backend.main import (
     load_environment, 
     get_model, 
     MemoryManager, 
-    create_wordpress_tools,
+    create_website_tools,
     setup_langsmith_tracing
 )
 from backend.persistent_store import PersistentJSONStore
@@ -217,10 +217,10 @@ def create_studio_agent():
             result += f"- {memory['content']} (type: {memory['type']})\\n"
         return result
     
-    # Combine memory tools with WordPress tools
+    # Combine memory tools with website tools (no WordPress dependencies)
     memory_tools = [remember_info, search_memory, list_all_memories]
-    wordpress_tools = create_wordpress_tools()
-    tools = memory_tools + wordpress_tools
+    website_tools = create_website_tools()
+    tools = memory_tools + website_tools
     
     system_prompt = """You are an AI assistant with memory and comprehensive website management capabilities, including visual editing and direct filesystem access.
 

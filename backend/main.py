@@ -384,24 +384,10 @@ def create_memory_tools(memory_manager: MemoryManager):
     
     return [remember_information, recall_information, list_memories]
 
-def create_wordpress_tools():
-    """Create tools for WordPress API interaction."""
-    # Import all WordPress tools from the comprehensive module
+def create_website_tools():
+    """Create tools for static website management (no WordPress dependencies)."""
+    # Import only the tools that are still available (no WordPress dependencies)
     try:
-        from backend.wordpress_tools import get_all_wordpress_tools
-        from backend.visual_editor_tools import (
-            wp_add_custom_css_to_page,
-            wp_add_content_block_to_page,
-            wp_get_page_structure,
-            wp_update_page_section
-        )
-        from backend.navigation_tools import (
-            wp_navigate_to_page,
-            wp_create_blank_page,
-            wp_list_all_pages,
-            wp_add_page_to_menu
-        )
-        from backend.disable_coming_soon_tool import wp_disable_coming_soon_mode
         from backend.filesystem_tools import (
             read_file,
             write_file,
@@ -414,47 +400,25 @@ def create_wordpress_tools():
             list_directory,
             get_file_info,
             search_files,
-            delete_local_page,
-            restore_local_page_from_wordpress,
-            get_allowed_directories,
-            add_page_to_manifest,
-            rebuild_manifest_from_files,
-            update_page_title_in_manifest,
             create_local_page,
-            refresh_streamlit_interface,
-            get_change_log,
-            mark_changes_as_pushed,
-            clear_change_log,
-            push_changes_to_wordpress,
-            check_wordpress_sync_status,
-            clone_wordpress_site_locally,
-            debug_sync_comparison,
-            migrate_to_v2_sync_system,
-            clone_wordpress_site_v2,
-            check_sync_status_v2,
-            show_page_diff_v2,
-            push_changes_v2,
-            force_overwrite_from_wordpress,
-            get_clone_history_v2,
-            restore_from_clone_v2,
-            verify_work_quality
+            refresh_streamlit_interface
         )
-    except ImportError:
-        # Fallback for direct execution
-        from wordpress_tools import get_all_wordpress_tools
-        from visual_editor_tools import (
-            wp_add_custom_css_to_page,
-            wp_add_content_block_to_page,
+        from backend.navigation_tools import (
+            wp_navigate_to_page,
+            wp_list_all_pages
+        )
+        from backend.visual_editor_tools import (
             wp_get_page_structure,
             wp_update_page_section
         )
-        from navigation_tools import (
-            wp_navigate_to_page,
-            wp_create_blank_page,
-            wp_list_all_pages,
-            wp_add_page_to_menu
+        from backend.local_editing_tools import get_local_editing_tools
+        from backend.netlify_deploy import (
+            deploy_page_to_netlify,
+            deploy_all_to_netlify,
+            check_netlify_deploy_status
         )
-        from disable_coming_soon_tool import wp_disable_coming_soon_mode
+    except ImportError:
+        # Fallback for direct execution
         from filesystem_tools import (
             read_file,
             write_file,
@@ -467,46 +431,25 @@ def create_wordpress_tools():
             list_directory,
             get_file_info,
             search_files,
-            delete_local_page,
-            restore_local_page_from_wordpress,
-            get_allowed_directories,
-            add_page_to_manifest,
-            rebuild_manifest_from_files,
-            update_page_title_in_manifest,
             create_local_page,
-            refresh_streamlit_interface,
-            get_change_log,
-            mark_changes_as_pushed,
-            clear_change_log,
-            push_changes_to_wordpress,
-            check_wordpress_sync_status,
-            clone_wordpress_site_locally,
-            debug_sync_comparison,
-            migrate_to_v2_sync_system,
-            clone_wordpress_site_v2,
-            check_sync_status_v2,
-            show_page_diff_v2,
-            push_changes_v2,
-            force_overwrite_from_wordpress,
-            get_clone_history_v2,
-            restore_from_clone_v2,
-            verify_work_quality
+            refresh_streamlit_interface
+        )
+        from navigation_tools import (
+            wp_navigate_to_page,
+            wp_list_all_pages
+        )
+        from visual_editor_tools import (
+            wp_get_page_structure,
+            wp_update_page_section
+        )
+        from local_editing_tools import get_local_editing_tools
+        from netlify_deploy import (
+            deploy_page_to_netlify,
+            deploy_all_to_netlify,
+            check_netlify_deploy_status
         )
     
-    # Combine all tools
-    wordpress_tools = get_all_wordpress_tools()
-    visual_tools = [
-        wp_add_custom_css_to_page,
-        wp_add_content_block_to_page,
-        wp_get_page_structure,
-        wp_update_page_section
-    ]
-    navigation_tools = [
-        wp_navigate_to_page,
-        wp_create_blank_page,
-        wp_list_all_pages,
-        wp_add_page_to_menu
-    ]
+    # Combine all available tools (no WordPress tools)
     filesystem_tools = [
         read_file,
         write_file,
@@ -519,35 +462,31 @@ def create_wordpress_tools():
         list_directory,
         get_file_info,
         search_files,
-        delete_local_page,
-        restore_local_page_from_wordpress,
-        get_allowed_directories,
-        add_page_to_manifest,
-        rebuild_manifest_from_files,
-        update_page_title_in_manifest,
         create_local_page,
-        refresh_streamlit_interface,
-        get_change_log,
-        mark_changes_as_pushed,
-        clear_change_log,
-        push_changes_to_wordpress,
-        check_wordpress_sync_status,
-        clone_wordpress_site_locally,
-        debug_sync_comparison,
-        migrate_to_v2_sync_system,
-        clone_wordpress_site_v2,
-        check_sync_status_v2,
-        show_page_diff_v2,
-        push_changes_v2,
-        force_overwrite_from_wordpress,
-        get_clone_history_v2,
-        restore_from_clone_v2,
-        verify_work_quality
+        refresh_streamlit_interface
     ]
     
-    utility_tools = [wp_disable_coming_soon_mode]
+    navigation_tools = [
+        wp_navigate_to_page,
+        wp_list_all_pages
+    ]
     
-    return wordpress_tools + visual_tools + navigation_tools + filesystem_tools + utility_tools
+    visual_tools = [
+        wp_get_page_structure,
+        wp_update_page_section
+    ]
+    
+    local_editing = get_local_editing_tools()
+    
+    netlify_tools = [
+        deploy_page_to_netlify,
+        deploy_all_to_netlify,
+        check_netlify_deploy_status
+    ]
+    
+    # Return all combined tools
+    all_tools = filesystem_tools + navigation_tools + visual_tools + local_editing + netlify_tools
+    return all_tools
 
 def create_memory_agent_system(use_sqlite: bool = False, model_name: str = "auto"):
     """Create and configure the memory agent system."""
@@ -746,10 +685,10 @@ def create_wordpress_memory_agent(use_sqlite: bool = False, model_name: str = "a
             result += f"- {memory['content']} (type: {memory['type']})\\n"
         return result
     
-    # Combine memory tools with WordPress tools
+    # Combine memory tools with website tools (no WordPress dependencies)
     memory_tools = [remember_info, search_memory, list_all_memories]
-    wordpress_tools = create_wordpress_tools()
-    tools = memory_tools + wordpress_tools
+    website_tools = create_website_tools()
+    tools = memory_tools + website_tools
     
     system_prompt = """You are an AI assistant with memory and comprehensive website management capabilities, including visual editing and direct filesystem access.
 
