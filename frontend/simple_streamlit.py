@@ -170,7 +170,12 @@ with st.sidebar:
                         working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
                         if working_file.exists():
                             with open(working_file, 'r', encoding='utf-8') as f:
-                                st.session_state.working_page_content = f.read()
+                                new_content = f.read()
+                                st.session_state.working_page_content = new_content
+                                # Force refresh with timestamp
+                                st.session_state.last_update = str(time.time())
+                        else:
+                            st.error(f"Working file not found: {working_file}")
                     except Exception as e:
                         st.error(f"Error loading working version: {e}")
                 st.rerun()
@@ -234,15 +239,20 @@ with st.sidebar:
                     st.session_state.messages.append(("assistant", assistant_response))
                     
                     # If the agent modified a page, reload the working version immediately
-                    if "current_page" in st.session_state:
+                    if "current_page" in st.session_state and st.session_state.current_page:
                         page_name = st.session_state.current_page
                         working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
                         if working_file.exists():
-                            with open(working_file, 'r', encoding='utf-8') as f:
-                                # Force reload the working version to show changes
-                                st.session_state.working_page_content = f.read()
-                                # Add timestamp to force iframe refresh
-                                st.session_state.last_update = str(time.time())
+                            try:
+                                with open(working_file, 'r', encoding='utf-8') as f:
+                                    # Force reload the working version to show changes
+                                    new_content = f.read()
+                                    st.session_state.working_page_content = new_content
+                                    # Add timestamp to force iframe refresh
+                                    st.session_state.last_update = str(time.time())
+                                    st.session_state.content_hash = hash(new_content)  # Force refresh
+                            except Exception as e:
+                                st.error(f"Error reloading working content: {e}")
                 else:
                     st.session_state.messages.append(("assistant", "I couldn't process that request."))
                 
@@ -322,7 +332,10 @@ if "current_page" in st.session_state and st.session_state.current_page:
             st.subheader(f"✏️ Working Version: {page_name}")
             # Display working version in large iframe
             if working_content:
-                components.html(working_content, height=900, scrolling=True)
+                # Add a unique HTML comment to force iframe refresh when content changes
+                timestamp = st.session_state.get('last_update', str(time.time()))
+                working_content_with_timestamp = working_content + f"\n<!-- Updated: {timestamp} -->"
+                components.html(working_content_with_timestamp, height=900, scrolling=True)
             else:
                 st.info("Select a page and click View to load the working version")
     else:
