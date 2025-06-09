@@ -330,14 +330,50 @@ if "current_page" in st.session_state and st.session_state.current_page:
         
         with col_right:
             st.subheader(f"✏️ Working Version: {page_name}")
+            
+            # Debug information
+            with st.expander("🔍 Debug Info", expanded=False):
+                st.write(f"**Session working content length:** {len(working_content) if working_content else 0} characters")
+                st.write(f"**Working file path:** {WORKING_DIR / f'{page_name.replace('/', '_')}.html'}")
+                st.write(f"**File exists:** {(WORKING_DIR / f'{page_name.replace('/', '_')}.html').exists()}")
+                if st.session_state.get('last_update'):
+                    st.write(f"**Last update:** {st.session_state.last_update}")
+                
+                # Show first 200 chars of content
+                if working_content:
+                    st.text_area("Content preview (first 200 chars):", working_content[:200], height=100)
+                
+                # Force reload button
+                if st.button("🔄 Force Reload Working Version"):
+                    working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
+                    if working_file.exists():
+                        with open(working_file, 'r', encoding='utf-8') as f:
+                            new_content = f.read()
+                            st.session_state.working_page_content = new_content
+                            st.session_state.last_update = str(time.time())
+                            st.success("Reloaded!")
+                            st.rerun()
+            
             # Display working version in large iframe
             if working_content:
-                # Add a unique HTML comment to force iframe refresh when content changes
+                # Create a unique container that forces refresh when content changes
                 timestamp = st.session_state.get('last_update', str(time.time()))
-                working_content_with_timestamp = working_content + f"\n<!-- Updated: {timestamp} -->"
-                components.html(working_content_with_timestamp, height=900, scrolling=True)
+                content_hash = hash(working_content[:1000])  # Hash first 1000 chars for uniqueness
+                
+                # Use a unique container to force iframe refresh
+                iframe_container = st.container()
+                with iframe_container:
+                    # Add a unique HTML comment and meta tag to force iframe refresh
+                    working_content_with_refresh = f"""
+<!-- Refresh ID: {timestamp}_{content_hash} -->
+<meta name="cache-control" content="no-cache">
+<meta name="expires" content="0">
+{working_content}
+"""
+                    components.html(working_content_with_refresh, height=900, scrolling=True)
             else:
-                st.info("Select a page and click View to load the working version")
+                st.warning("❌ No working content loaded!")
+                st.info("Try clicking 'Force Reload Working Version' in the debug section above.")
     else:
         st.error(f"❌ Page '{page_name}' not found")
 else:
