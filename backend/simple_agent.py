@@ -177,6 +177,20 @@ def check_git_status() -> str:
         output = "📊 Git Status:\n\n"
         if status:
             output += f"🔄 Uncommitted changes:\n{status}\n\n"
+            output += "📋 Files ready to commit:\n"
+            for line in status.split('\n'):
+                if line.strip():
+                    status_code = line[:2]
+                    filename = line[3:]
+                    if status_code.strip() == 'M':
+                        output += f"   📝 Modified: {filename}\n"
+                    elif status_code.strip() == 'A':
+                        output += f"   ➕ Added: {filename}\n"
+                    elif status_code.strip() == 'D':
+                        output += f"   ❌ Deleted: {filename}\n"
+                    elif status_code.strip() == '??':
+                        output += f"   ❓ Untracked: {filename}\n"
+            output += "\n"
         else:
             output += "✅ Working directory clean\n\n"
         
@@ -185,6 +199,72 @@ def check_git_status() -> str:
         
     except Exception as e:
         return f"❌ Error checking git status: {str(e)}"
+
+@tool
+def commit_specific_files(files: str, message: str = "Update specific files") -> str:
+    """Commit only specific files (comma-separated list) and push to GitHub."""
+    try:
+        os.chdir(PROJECT_ROOT)
+        
+        # Parse file list
+        file_list = [f.strip() for f in files.split(',')]
+        
+        # Add specific files
+        for file_path in file_list:
+            result = subprocess.run(['git', 'add', file_path], capture_output=True, text=True)
+            if result.returncode != 0:
+                return f"❌ Failed to add {file_path}: {result.stderr}"
+        
+        # Check if there are changes to commit
+        result = subprocess.run(['git', 'status', '--porcelain', '--cached'], capture_output=True, text=True)
+        if not result.stdout.strip():
+            return "ℹ️ No changes staged for commit"
+        
+        # Commit changes
+        result = subprocess.run(['git', 'commit', '-m', message], capture_output=True, text=True)
+        if result.returncode != 0:
+            return f"❌ Git commit failed: {result.stderr}"
+        
+        # Check if upstream is set up and push
+        result = subprocess.run(['git', 'rev-parse', '--abbrev-ref', '@{upstream}'], capture_output=True, text=True)
+        if result.returncode != 0:
+            current_branch_result = subprocess.run(['git', 'branch', '--show-current'], capture_output=True, text=True)
+            current_branch = current_branch_result.stdout.strip()
+            upstream_result = subprocess.run(['git', 'branch', '--set-upstream-to=origin/' + current_branch, current_branch], capture_output=True, text=True)
+            if upstream_result.returncode != 0:
+                return f"❌ Could not set upstream branch: {upstream_result.stderr}"
+        
+        # Push to GitHub
+        result = subprocess.run(['git', 'push'], capture_output=True, text=True)
+        if result.returncode != 0:
+            current_branch_result = subprocess.run(['git', 'branch', '--show-current'], capture_output=True, text=True)
+            current_branch = current_branch_result.stdout.strip()
+            fallback_result = subprocess.run(['git', 'push', '--set-upstream', 'origin', current_branch], capture_output=True, text=True)
+            if fallback_result.returncode != 0:
+                return f"❌ Git push failed: {result.stderr}\n❌ Fallback push also failed: {fallback_result.stderr}"
+        
+        return f"✅ Successfully committed and pushed specific files!\n📁 Files: {files}\n📝 Message: {message}\n🚀 Netlify will auto-deploy"
+        
+    except Exception as e:
+        return f"❌ Git operation failed: {str(e)}"
+
+@tool
+def commit_current_page(page_name: str, message: str = None) -> str:
+    """Commit only the current page being worked on."""
+    try:
+        if not message:
+            message = f"Update {page_name} page"
+        
+        # Determine the file path for the page
+        if "/" in page_name:
+            file_path = f"deploy/public/{page_name}.html"
+        else:
+            file_path = f"deploy/public/{page_name}.html"
+        
+        return commit_specific_files(file_path, message)
+        
+    except Exception as e:
+        return f"❌ Error committing current page: {str(e)}"
 
 @tool
 def get_working_version(page_name: str) -> str:
@@ -252,6 +332,8 @@ def create_simple_agent():
         get_working_version,
         deploy_working_version,
         git_commit_and_push,
+        commit_specific_files,
+        commit_current_page,
         check_git_status
     ]
     
@@ -290,8 +372,10 @@ AVAILABLE TOOLS:
 - read_file() - Read any file content
 - write_file() - Write/update files  
 - deploy_working_version(page_name) - Deploy working version to live site
-- git_commit_and_push() - Commit & push (only when asked)
-- check_git_status() - Check uncommitted changes
+- check_git_status() - Check uncommitted changes with detailed file list
+- commit_current_page(page_name) - Commit & push only the current page
+- commit_specific_files(files, message) - Commit & push specific files (comma-separated)
+- git_commit_and_push() - Commit & push ALL changes (use sparingly)
 
 IMPORTANT:
 - Use currently viewed page context to avoid asking unnecessary questions

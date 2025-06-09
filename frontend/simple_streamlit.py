@@ -85,16 +85,37 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"Error: {e}")
     
-    if st.button("🚀 Commit & Push All", use_container_width=True):
-        with st.spinner("Committing and pushing..."):
-            try:
-                from backend.simple_agent import git_commit_and_push
-                result = git_commit_and_push.invoke({"message": "Quick commit via UI"})
-                st.session_state.messages.append(("user", "Commit and push changes"))
-                st.session_state.messages.append(("assistant", result))
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error: {e}")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🚀 Commit & Push All", use_container_width=True):
+            with st.spinner("Committing and pushing all changes..."):
+                try:
+                    from backend.simple_agent import git_commit_and_push
+                    result = git_commit_and_push.invoke({"message": "Quick commit via UI"})
+                    st.session_state.messages.append(("user", "Commit and push all changes"))
+                    st.session_state.messages.append(("assistant", result))
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error: {e}")
+    
+    with col2:
+        if st.button("📄 Commit Current Page", use_container_width=True):
+            current_page = st.session_state.get("current_page")
+            if current_page:
+                with st.spinner(f"Committing {current_page} page..."):
+                    try:
+                        from backend.simple_agent import commit_current_page
+                        result = commit_current_page.invoke({
+                            "page_name": current_page,
+                            "message": f"Update {current_page} page via UI"
+                        })
+                        st.session_state.messages.append(("user", f"Commit {current_page} page only"))
+                        st.session_state.messages.append(("assistant", result))
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+            else:
+                st.error("Select a page first")
     
     st.divider()
     
@@ -220,7 +241,14 @@ with st.sidebar:
     1. 👁️ View a page (sets context)
     2. 💬 Chat without specifying page name
     3. 📋 Deploy when ready
-    4. 🚀 Commit & push to save
+    4. 🚀 Choose commit option:
+       - **Commit Current Page**: Just this page
+       - **Commit & Push All**: All changes
+    
+    **Git Controls:**
+    - 📊 **Check Git Status**: See what's changed
+    - 📄 **Commit Current Page**: Deploy just this page
+    - 🚀 **Commit & Push All**: Deploy everything
     """)
     
     if st.button("🗑️ Clear Chat", use_container_width=True):
