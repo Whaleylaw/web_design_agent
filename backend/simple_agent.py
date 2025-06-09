@@ -19,14 +19,25 @@ from langgraph.store.memory import InMemoryStore
 # Load environment
 load_dotenv()
 
-# Disable LangSmith to avoid errors
-os.environ.pop("LANGSMITH_API_KEY", None)
-os.environ.pop("LANGSMITH_TRACING", None)
+# Enable LangSmith tracing for debugging
+def setup_langsmith_tracing():
+    """Setup LangSmith tracing if available"""
+    try:
+        if os.getenv("LANGSMITH_API_KEY"):
+            os.environ["LANGCHAIN_TRACING_V2"] = "true"
+            os.environ["LANGCHAIN_PROJECT"] = "web-design-agent"
+            print("✅ LangSmith tracing enabled")
+        return True
+    except Exception as e:
+        print(f"⚠️ LangSmith setup failed: {e}")
+        return False
 
-# Project paths
+setup_langsmith_tracing()
+
+# Project paths  
 PROJECT_ROOT = Path.cwd()
-PAGES_DIR = PROJECT_ROOT / "wordpress_clone" / "pages"
-DEPLOY_DIR = PROJECT_ROOT / "deploy" / "public"
+DEPLOY_DIR = PROJECT_ROOT / "deploy" / "public"  # Live pages that Netlify serves
+WORKING_DIR = PROJECT_ROOT / "working" / "pages"  # Working versions for editing
 
 def get_model(model_name: str = "gpt-4o-mini"):
     """Get OpenAI model"""
@@ -71,22 +82,29 @@ def write_file(file_path: str, content: str) -> str:
 
 @tool
 def list_pages() -> str:
-    """List all available pages."""
+    """List all available pages by their actual names."""
     try:
-        if not PAGES_DIR.exists():
-            return "❌ Pages directory not found"
+        if not DEPLOY_DIR.exists():
+            return "❌ Deploy directory not found"
         
         pages = []
-        for page_dir in PAGES_DIR.iterdir():
-            if page_dir.is_dir() and page_dir.name.startswith("page_"):
-                page_id = page_dir.name.replace("page_", "")
-                index_file = page_dir / "index.html"
-                if index_file.exists():
-                    pages.append(f"📄 Page {page_id}: {index_file}")
+        for page_file in DEPLOY_DIR.iterdir():
+            if page_file.is_file() and page_file.suffix == ".html":
+                page_name = page_file.stem  # filename without .html
+                pages.append(f"📄 {page_name}: {page_file}")
+        
+        # Also check pages subdirectory
+        pages_subdir = DEPLOY_DIR / "pages"
+        if pages_subdir.exists():
+            for page_file in pages_subdir.iterdir():
+                if page_file.is_file() and page_file.suffix == ".html":
+                    page_name = f"pages/{page_file.stem}"
+                    pages.append(f"📄 {page_name}: {page_file}")
         
         if not pages:
             return "ℹ️ No pages found"
         
+        pages.sort()  # Sort alphabetically
         return "📋 Available pages:\n\n" + "\n".join(pages)
     except Exception as e:
         return f"❌ Error listing pages: {str(e)}"
@@ -150,25 +168,59 @@ def check_git_status() -> str:
         return f"❌ Error checking git status: {str(e)}"
 
 @tool
-def copy_to_deploy(page_id: str) -> str:
-    """Copy a page to the deploy directory (for Netlify)."""
+def get_working_version(page_name: str) -> str:
+    """Get the working version of a page, creating it if it doesn't exist."""
     try:
-        source_file = PAGES_DIR / f"page_{page_id}" / "index.html"
+        # Determine source file path
+        if "/" in page_name:  # pages/index format
+            source_file = DEPLOY_DIR / f"{page_name}.html"
+        else:
+            source_file = DEPLOY_DIR / f"{page_name}.html"
         
         if not source_file.exists():
-            return f"❌ Page {page_id} not found"
+            return f"❌ Page '{page_name}' not found in deploy directory"
         
-        # Copy to deploy directory
-        DEPLOY_DIR.mkdir(parents=True, exist_ok=True)
-        dest_file = DEPLOY_DIR / f"page_{page_id}.html"
+        # Create working directory if needed
+        WORKING_DIR.mkdir(parents=True, exist_ok=True)
         
-        import shutil
-        shutil.copy2(source_file, dest_file)
+        # Working file path
+        working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
         
-        return f"✅ Copied page {page_id} to deploy directory: {dest_file}"
+        # If working version doesn't exist, copy from deploy
+        if not working_file.exists():
+            import shutil
+            shutil.copy2(source_file, working_file)
+            return f"✅ Created working version: {working_file}"
+        
+        return f"✅ Working version exists: {working_file}"
         
     except Exception as e:
-        return f"❌ Error copying page: {str(e)}"
+        return f"❌ Error getting working version: {str(e)}"
+
+@tool
+def deploy_working_version(page_name: str) -> str:
+    """Deploy working version back to live site (copy working → deploy)."""
+    try:
+        # Working file path
+        working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
+        
+        if not working_file.exists():
+            return f"❌ No working version found for '{page_name}'"
+        
+        # Determine destination file path
+        if "/" in page_name:  # pages/index format
+            dest_file = DEPLOY_DIR / f"{page_name}.html"
+        else:
+            dest_file = DEPLOY_DIR / f"{page_name}.html"
+        
+        # Copy working version to deploy
+        import shutil
+        shutil.copy2(working_file, dest_file)
+        
+        return f"✅ Deployed working version of '{page_name}' to live site: {dest_file}"
+        
+    except Exception as e:
+        return f"❌ Error deploying working version: {str(e)}"
 
 def create_simple_agent():
     """Create a simple agent with just essential tools."""
@@ -178,33 +230,55 @@ def create_simple_agent():
         read_file,
         write_file, 
         list_pages,
+        get_working_version,
+        deploy_working_version,
         git_commit_and_push,
-        check_git_status,
-        copy_to_deploy
+        check_git_status
     ]
     
-    system_prompt = """You are a simple web design agent. Your workflow is:
+    system_prompt = """You are a precise web design agent that edits HTML pages for Netlify deployment.
 
-1. **Edit Files**: Read and modify HTML/CSS files in wordpress_clone/pages/page_X/index.html
-2. **Git Operations**: Commit changes and push to GitHub
-3. **Netlify Auto-Deploy**: GitHub push triggers automatic Netlify deployment
+CRITICAL ACCURACY RULES:
+1. 🎯 ALWAYS check if user is viewing a page in the canvas (CONTEXT message)
+2. 📖 ALWAYS read the file first before making ANY changes  
+3. ✅ ALWAYS verify you're editing the correct page after reading
+4. 🔍 ALWAYS double-check your work using reflection
 
-CORE COMMANDS:
-- read_file() - Read any file
-- write_file() - Write/update files
-- list_pages() - Show available pages
-- git_commit_and_push() - Commit & push to GitHub (triggers Netlify)
-- check_git_status() - Check for uncommitted changes
-- copy_to_deploy() - Copy pages to deploy directory
+PAGE CONTEXT AWARENESS:
+- If user message includes "CONTEXT: User is currently viewing page 'X'", use that page when no specific page is mentioned
+- When user says "change the background" without specifying a page, use the currently viewed page
+- When user says "add a 😊" without specifying a page, use the currently viewed page
+- Only ask for page clarification if no page is specified AND no page is currently being viewed
 
-WORKFLOW EXAMPLE:
-1. User: "Change page 1 background to blue"
-2. read_file("wordpress_clone/pages/page_1/index.html")
-3. Modify HTML with blue background
-4. write_file("wordpress_clone/pages/page_1/index.html", updated_content)
-5. git_commit_and_push("Changed page 1 background to blue")
+REFLECTION PROCESS - After each action, ask yourself:
+- "Did I edit the correct page that the user intended?"
+- "Did I use the currently viewed page context when appropriate?"
+- "Did I make the exact changes requested?"
+- "Are my changes actually saved to the right file?"
 
-Keep it simple! You just edit files and push to GitHub."""
+WORKFLOW FOR EVERY EDIT:
+1. Check for CONTEXT about currently viewed page
+2. If user doesn't specify page, use the currently viewed page from context
+3. get_working_version(page_name) - Get/create working version
+4. read_file("working/pages/[page_name].html") - Read working version
+5. Make changes carefully to working version
+6. write_file("working/pages/[page_name].html", updated_content)
+7. Confirm: "I successfully modified [page_name] with [specific changes]"
+
+AVAILABLE TOOLS:
+- list_pages() - Show all pages (happy, about, lawyer-now, etc.)
+- get_working_version(page_name) - Create working copy for editing
+- read_file() - Read any file content
+- write_file() - Write/update files  
+- deploy_working_version(page_name) - Deploy working version to live site
+- git_commit_and_push() - Commit & push (only when asked)
+- check_git_status() - Check uncommitted changes
+
+IMPORTANT:
+- Use currently viewed page context to avoid asking unnecessary questions
+- NEVER commit changes unless user explicitly asks
+- ALWAYS state which page you modified and what changes you made
+- Preserve all existing HTML structure"""
 
     return create_react_agent(model, tools, prompt=system_prompt)
 

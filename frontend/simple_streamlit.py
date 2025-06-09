@@ -7,6 +7,7 @@ Just: Edit Files → Git Push → Netlify Deploy
 import streamlit as st
 import sys
 import os
+import time
 from pathlib import Path
 import streamlit.components.v1 as components
 
@@ -14,7 +15,7 @@ import streamlit.components.v1 as components
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from backend.simple_agent import create_simple_agent
+from backend.simple_agent import create_simple_agent, DEPLOY_DIR, WORKING_DIR
 from langchain_core.messages import HumanMessage, AIMessage
 
 # Page config
@@ -25,11 +26,33 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+def get_available_pages():
+    """Get list of available page names for dropdown."""
+    pages = []
+    try:
+        # Get pages from deploy directory
+        if DEPLOY_DIR.exists():
+            for page_file in DEPLOY_DIR.iterdir():
+                if page_file.is_file() and page_file.suffix == ".html":
+                    pages.append(page_file.stem)
+            
+            # Also check pages subdirectory
+            pages_subdir = DEPLOY_DIR / "pages"
+            if pages_subdir.exists():
+                for page_file in pages_subdir.iterdir():
+                    if page_file.is_file() and page_file.suffix == ".html":
+                        pages.append(f"pages/{page_file.stem}")
+        
+        return sorted(pages) if pages else ["No pages found"]
+    except Exception:
+        return ["Error loading pages"]
+
 # Initialize session state
 if "agent" not in st.session_state:
     try:
         st.session_state.agent = create_simple_agent()
         st.session_state.messages = []
+        st.session_state.current_page = None
         st.success("✅ Simple agent initialized!")
     except Exception as e:
         st.error(f"❌ Failed to initialize agent: {e}")
@@ -77,35 +100,57 @@ with st.sidebar:
     
     # Page Controls
     st.subheader("📝 Page Controls")
-    page_id = st.text_input("Page ID", value="1", help="Enter page ID: 1, 6, 13, 16, 21, or 53")
+    available_pages = get_available_pages()
+    page_name = st.selectbox(
+        "Select Page", 
+        available_pages,
+        index=0,
+        help="Choose a page to edit"
+    )
     
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("👁️ View", use_container_width=True):
-            st.session_state.current_page = page_id
-            # Initialize working content as copy of original
-            page_path = f"wordpress_clone/pages/page_{page_id}/index.html"
-            if Path(page_path).exists():
-                with open(page_path, 'r', encoding='utf-8') as f:
-                    st.session_state.working_page_content = f.read()
-            st.rerun()
+            if page_name and page_name != "No pages found" and page_name != "Error loading pages":
+                st.session_state.current_page = page_name
+                
+                # Initialize working content - get working version first
+                with st.spinner(f"Loading {page_name}..."):
+                    try:
+                        from backend.simple_agent import get_working_version
+                        get_working_version.invoke({"page_name": page_name})
+                        
+                        # Load working version content
+                        working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
+                        if working_file.exists():
+                            with open(working_file, 'r', encoding='utf-8') as f:
+                                st.session_state.working_page_content = f.read()
+                    except Exception as e:
+                        st.error(f"Error loading working version: {e}")
+                st.rerun()
     
     with col_b:
         if st.button("📋 Deploy", use_container_width=True):
-            with st.spinner(f"Copying page {page_id}..."):
-                try:
-                    from backend.simple_agent import copy_to_deploy
-                    result = copy_to_deploy.invoke({"page_id": page_id})
-                    st.session_state.messages.append(("user", f"Copy page {page_id} to deploy"))
-                    st.session_state.messages.append(("assistant", result))
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error: {e}")
+            if page_name and page_name != "No pages found" and page_name != "Error loading pages":
+                with st.spinner(f"Deploying {page_name}..."):
+                    try:
+                        from backend.simple_agent import deploy_working_version
+                        result = deploy_working_version.invoke({"page_name": page_name})
+                        st.session_state.messages.append(("user", f"Deploy {page_name}"))
+                        st.session_state.messages.append(("assistant", result))
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
     
     st.divider()
     
     # Chat interface in sidebar
     st.subheader("💬 Chat with Agent")
+    
+    # Show current page context
+    if "current_page" in st.session_state and st.session_state.current_page:
+        st.info(f"📄 Currently viewing: **{st.session_state.current_page}**")
+        st.caption("Agent will edit this page when no specific page is mentioned")
     
     # Display recent chat messages in compact format
     if st.session_state.messages:
@@ -117,25 +162,41 @@ with st.sidebar:
                     st.markdown(f"**🤖 Agent:** {message}")
     
     # Chat input
-    if prompt := st.chat_input("Ask the agent to edit pages..."):
-        st.session_state.messages.append(("user", prompt))
+    current_page_hint = ""
+    if "current_page" in st.session_state and st.session_state.current_page:
+        current_page_hint = f" (will edit {st.session_state.current_page})"
+    
+    if prompt := st.chat_input(f"Ask the agent to edit pages...{current_page_hint}"):
+        # Add context about current page if one is selected
+        current_page_context = ""
+        if "current_page" in st.session_state and st.session_state.current_page:
+            current_page_context = f"\n\nCONTEXT: User is currently viewing page '{st.session_state.current_page}' in the canvas. If they don't specify a page name, assume they mean this page."
+        
+        # Combine user prompt with context
+        full_prompt = prompt + current_page_context
+        
+        st.session_state.messages.append(("user", prompt))  # Store original for display
         
         with st.spinner("Agent thinking..."):
             try:
                 response = st.session_state.agent.invoke({
-                    "messages": [HumanMessage(content=prompt)]
+                    "messages": [HumanMessage(content=full_prompt)]  # Send with context
                 })
                 
                 if response and 'messages' in response:
                     assistant_response = response['messages'][-1].content
                     st.session_state.messages.append(("assistant", assistant_response))
                     
-                    # If the agent modified a page, reload the working version
+                    # If the agent modified a page, reload the working version immediately
                     if "current_page" in st.session_state:
-                        current_page_path = f"wordpress_clone/pages/page_{st.session_state.current_page}/index.html"
-                        if Path(current_page_path).exists():
-                            with open(current_page_path, 'r', encoding='utf-8') as f:
+                        page_name = st.session_state.current_page
+                        working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
+                        if working_file.exists():
+                            with open(working_file, 'r', encoding='utf-8') as f:
+                                # Force reload the working version to show changes
                                 st.session_state.working_page_content = f.read()
+                                # Add timestamp to force iframe refresh
+                                st.session_state.last_update = str(time.time())
                 else:
                     st.session_state.messages.append(("assistant", "I couldn't process that request."))
                 
@@ -149,15 +210,15 @@ with st.sidebar:
     # Help section
     st.subheader("📚 Quick Help")
     st.markdown("""
-    **Simple Commands:**
-    - "Change the background to blue"
-    - "Add a header saying Welcome"
-    - "Make the text larger"
-    - "Change the title"
+    **Context-Aware Commands:**
+    - "Change the background to blue" ← edits current page
+    - "Add another 😊" ← edits current page
+    - "Make the text larger" ← edits current page
+    - Or specify: "Change happy page to green"
     
     **Workflow:**
-    1. 👁️ View a page
-    2. 💬 Chat to make changes  
+    1. 👁️ View a page (sets context)
+    2. 💬 Chat without specifying page name
     3. 📋 Deploy when ready
     4. 🚀 Commit & push to save
     """)
@@ -170,57 +231,80 @@ with st.sidebar:
 st.title("🌐 Web Design Agent - Page Editor")
 
 if "current_page" in st.session_state and st.session_state.current_page:
-    page_path = f"wordpress_clone/pages/page_{st.session_state.current_page}/index.html"
+    page_name = st.session_state.current_page
     
-    if Path(page_path).exists():
-        # Load original content
-        with open(page_path, 'r', encoding='utf-8') as f:
+    # Determine original page path
+    if "/" in page_name:  # pages/index format
+        original_page_path = DEPLOY_DIR / f"{page_name}.html"
+    else:
+        original_page_path = DEPLOY_DIR / f"{page_name}.html"
+    
+    if original_page_path.exists():
+        # Load original content from deploy directory
+        with open(original_page_path, 'r', encoding='utf-8') as f:
             original_content = f.read()
         
-        # Use working content if available, otherwise use original
-        working_content = st.session_state.get("working_page_content", original_content)
+        # Load working content if available, otherwise use original
+        working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
+        working_content = original_content  # Default fallback
+        
+        if working_file.exists():
+            with open(working_file, 'r', encoding='utf-8') as f:
+                working_content = f.read()
+        
+        # Use session state working content if available (for real-time updates)
+        session_working_content = st.session_state.get("working_page_content")
+        if session_working_content:
+            working_content = session_working_content
         
         # Two large columns for page display - equal width
         col_left, col_right = st.columns(2)
         
         with col_left:
-            st.subheader(f"📄 Original Page {st.session_state.current_page}")
+            st.subheader(f"📄 Original: {page_name}")
             # Display original page in large iframe
             components.html(original_content, height=900, scrolling=True)
         
         with col_right:
-            st.subheader(f"✏️ Working Version Page {st.session_state.current_page}")
+            st.subheader(f"✏️ Working Version: {page_name}")
             # Display working version in large iframe
-            components.html(working_content, height=900, scrolling=True)
+            if working_content:
+                components.html(working_content, height=900, scrolling=True)
+            else:
+                st.info("Select a page and click View to load the working version")
     else:
-        st.error(f"❌ Page {st.session_state.current_page} not found at {page_path}")
-        st.info("Available pages: 1, 6, 13, 16, 21, 53")
+        st.error(f"❌ Page '{page_name}' not found")
 else:
     # Welcome screen when no page is selected
-    st.markdown("""
+    available_pages = get_available_pages()
+    st.markdown(f"""
     ## 👋 Welcome to the Web Design Agent!
     
     ### 🚀 **Simple Workflow:**
     
-    1. **📄 Select a page** in the sidebar (1, 6, 13, 16, 21, or 53)
+    1. **📄 Select a page** from the dropdown in the sidebar
     2. **👁️ Click "View"** to see the dual-canvas editor
     3. **💬 Chat with the agent** to make changes to your page
-    4. **📋 Click "Deploy"** when ready to push to Netlify
+    4. **📋 Click "Deploy"** to push working version to live site
     5. **🚀 Click "Commit & Push All"** to save everything to Git
     
     ### 📋 **Features:**
-    - **Left Canvas**: Original page version
+    - **Left Canvas**: Original live page from `deploy/public/`
     - **Right Canvas**: Your working version with edits
-    - **Live Updates**: Changes appear instantly in the working version
+    - **Safe Editing**: Changes go to working version first
+    - **Live Updates**: Changes appear instantly in working version
     - **Git Integration**: All changes are tracked and deployable
     
     ### 💡 **Example Commands:**
-    - *"Change the background color to blue"*
-    - *"Add a welcome message at the top"*  
-    - *"Make the heading text larger"*
-    - *"Change the page title to 'My Website'"*
+    - *"Change the background color of the happy page to blue"*
+    - *"Add a welcome message to the about page"*  
+    - *"Make the heading text larger on lawyer-now"*
+    - *"Update the title of the index page"*
     
-    **👈 Start by selecting a page ID in the sidebar!**
+    ### 📄 **Available Pages:**
+    {', '.join(available_pages)}
+    
+    **👈 Start by selecting a page from the dropdown in the sidebar!**
     """)
 
 # Custom CSS for better layout
