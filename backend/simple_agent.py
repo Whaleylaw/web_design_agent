@@ -131,10 +131,29 @@ def git_commit_and_push(message: str = "Update website files") -> str:
         if result.returncode != 0:
             return f"❌ Git commit failed: {result.stderr}"
         
+        # Check if upstream is set up
+        result = subprocess.run(['git', 'rev-parse', '--abbrev-ref', '@{upstream}'], capture_output=True, text=True)
+        if result.returncode != 0:
+            # No upstream set, try to set it up
+            current_branch_result = subprocess.run(['git', 'branch', '--show-current'], capture_output=True, text=True)
+            current_branch = current_branch_result.stdout.strip()
+            
+            # Set upstream to origin/<current_branch>
+            upstream_result = subprocess.run(['git', 'branch', '--set-upstream-to=origin/' + current_branch, current_branch], capture_output=True, text=True)
+            if upstream_result.returncode == 0:
+                print(f"✅ Set upstream branch to origin/{current_branch}")
+            else:
+                return f"❌ Could not set upstream branch: {upstream_result.stderr}"
+        
         # Push to GitHub
         result = subprocess.run(['git', 'push'], capture_output=True, text=True)
         if result.returncode != 0:
-            return f"❌ Git push failed: {result.stderr}"
+            # If push fails, try with --set-upstream as fallback
+            current_branch_result = subprocess.run(['git', 'branch', '--show-current'], capture_output=True, text=True)
+            current_branch = current_branch_result.stdout.strip()
+            fallback_result = subprocess.run(['git', 'push', '--set-upstream', 'origin', current_branch], capture_output=True, text=True)
+            if fallback_result.returncode != 0:
+                return f"❌ Git push failed: {result.stderr}\n❌ Fallback push also failed: {fallback_result.stderr}"
         
         return f"✅ Successfully committed and pushed changes!\n📝 Commit message: {message}\n🚀 Netlify will auto-deploy from GitHub"
         
