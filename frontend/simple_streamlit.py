@@ -52,8 +52,25 @@ if "agent" not in st.session_state:
     try:
         st.session_state.agent = create_simple_agent()
         st.session_state.messages = []
-        st.session_state.current_page = None
-        st.success("✅ Simple agent initialized!")
+        
+        # Auto-load the main page (index) on startup
+        main_page = "index"
+        if (DEPLOY_DIR / f"{main_page}.html").exists():
+            st.session_state.current_page = main_page
+            
+            # Create working version automatically
+            from backend.simple_agent import get_working_version
+            get_working_version.invoke({"page_name": main_page})
+            
+            # Load working version content for immediate display
+            working_file = WORKING_DIR / f"{main_page}.html"
+            if working_file.exists():
+                with open(working_file, 'r', encoding='utf-8') as f:
+                    st.session_state.working_page_content = f.read()
+        else:
+            st.session_state.current_page = None
+            
+        st.success("✅ Simple agent initialized and main page loaded!")
     except Exception as e:
         st.error(f"❌ Failed to initialize agent: {e}")
         st.stop()
@@ -122,10 +139,18 @@ with st.sidebar:
     # Page Controls
     st.subheader("📝 Page Controls")
     available_pages = get_available_pages()
+    
+    # Set default to current page or index
+    default_index = 0
+    if st.session_state.get("current_page") in available_pages:
+        default_index = available_pages.index(st.session_state.current_page)
+    elif "index" in available_pages:
+        default_index = available_pages.index("index")
+    
     page_name = st.selectbox(
         "Select Page", 
         available_pages,
-        index=0,
+        index=default_index,
         help="Choose a page to edit"
     )
     
