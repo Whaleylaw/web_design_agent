@@ -66,7 +66,7 @@ def read_file(file_path: str) -> str:
 
 @tool  
 def write_file(file_path: str, content: str) -> str:
-    """Write content to a file."""
+    """Write content to a file. WARNING: This overwrites the entire file. Use search_replace_in_file for targeted edits."""
     try:
         path = Path(file_path)
         if not path.is_absolute():
@@ -79,6 +79,91 @@ def write_file(file_path: str, content: str) -> str:
         return f"✅ Wrote {len(content)} characters to {file_path}"
     except Exception as e:
         return f"❌ Error writing {file_path}: {str(e)}"
+
+@tool
+def search_replace_in_file(file_path: str, search_text: str, replace_text: str) -> str:
+    """Make a targeted edit by replacing specific text in a file. PREFERRED over write_file for edits."""
+    try:
+        path = Path(file_path)
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        
+        if not path.exists():
+            return f"❌ File not found: {file_path}"
+        
+        # Read current content
+        current_content = path.read_text(encoding='utf-8')
+        original_length = len(current_content)
+        
+        # Check if search text exists
+        if search_text not in current_content:
+            return f"❌ Search text not found in {file_path}. Please check the exact text to replace."
+        
+        # Count occurrences
+        occurrences = current_content.count(search_text)
+        if occurrences > 1:
+            return f"⚠️ Found {occurrences} occurrences of search text in {file_path}. Please be more specific to target exactly one instance."
+        
+        # Perform replacement
+        new_content = current_content.replace(search_text, replace_text)
+        
+        # Write back to file
+        path.write_text(new_content, encoding='utf-8')
+        new_length = len(new_content)
+        
+        return f"✅ Successfully replaced text in {file_path}\n📊 File size: {original_length} → {new_length} characters\n🔄 Made 1 replacement"
+        
+    except Exception as e:
+        return f"❌ Error in search/replace for {file_path}: {str(e)}"
+
+@tool
+def verify_file_completeness(file_path: str) -> str:
+    """Verify that a file is complete and not truncated. Check for proper HTML structure."""
+    try:
+        path = Path(file_path)
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        
+        if not path.exists():
+            return f"❌ File not found: {file_path}"
+        
+        content = path.read_text(encoding='utf-8')
+        
+        # Basic completeness checks
+        issues = []
+        
+        # Check if file is too short (likely truncated)
+        if len(content) < 100:
+            issues.append("⚠️ File is very short, may be truncated")
+        
+        # For HTML files, check structure
+        if file_path.endswith('.html'):
+            if not content.strip().startswith('<!DOCTYPE html>') and not content.strip().startswith('<html'):
+                issues.append("⚠️ Missing HTML DOCTYPE or opening tag")
+            
+            if '</html>' not in content:
+                issues.append("❌ Missing closing </html> tag - file appears truncated")
+            
+            if '</body>' not in content:
+                issues.append("❌ Missing closing </body> tag - file appears truncated")
+            
+            if content.count('<html') != content.count('</html>'):
+                issues.append("❌ Mismatched <html> tags")
+            
+            if content.count('<body') != content.count('</body>'):
+                issues.append("❌ Mismatched <body> tags")
+        
+        # Check for abrupt ending (common in truncated files)
+        if content.strip().endswith('...') or content.strip().endswith('<!-- '):
+            issues.append("❌ File appears to end abruptly - likely truncated")
+        
+        if issues:
+            return f"🔍 File verification for {file_path}:\n" + "\n".join(issues) + f"\n📊 File size: {len(content)} characters"
+        else:
+            return f"✅ File {file_path} appears complete\n📊 File size: {len(content)} characters"
+        
+    except Exception as e:
+        return f"❌ Error verifying {file_path}: {str(e)}"
 
 @tool
 def list_pages() -> str:
@@ -327,6 +412,8 @@ def create_simple_agent():
     
     tools = [
         read_file,
+        search_replace_in_file,
+        verify_file_completeness,
         write_file, 
         list_pages,
         get_working_version,
@@ -339,11 +426,18 @@ def create_simple_agent():
     
     system_prompt = """You are a precise web design agent that edits HTML pages for Netlify deployment.
 
+CRITICAL EDITING APPROACH:
+🎯 ALWAYS use surgical edits instead of rewriting entire files
+📖 PREFER search_replace_in_file over write_file for all changes
+🔍 ALWAYS verify file completeness after any edit
+
 CRITICAL ACCURACY RULES:
 1. 🎯 ALWAYS check if user is viewing a page in the canvas (CONTEXT message)
 2. 📖 ALWAYS read the file first before making ANY changes  
 3. ✅ ALWAYS verify you're editing the correct page after reading
-4. 🔍 ALWAYS double-check your work using reflection
+4. 🔧 PREFER surgical edits with search_replace_in_file over full file rewrites
+5. 🔍 ALWAYS verify file completeness after edits to catch truncation
+6. 🔄 ALWAYS double-check your work using reflection
 
 PAGE CONTEXT AWARENESS:
 - If user message includes "CONTEXT: User is currently viewing page 'X'", use that page when no specific page is mentioned
@@ -351,26 +445,30 @@ PAGE CONTEXT AWARENESS:
 - When user says "add a 😊" without specifying a page, use the currently viewed page
 - Only ask for page clarification if no page is specified AND no page is currently being viewed
 
-REFLECTION PROCESS - After each action, ask yourself:
-- "Did I edit the correct page that the user intended?"
-- "Did I use the currently viewed page context when appropriate?"
-- "Did I make the exact changes requested?"
-- "Are my changes actually saved to the right file?"
-
-WORKFLOW FOR EVERY EDIT:
+SURGICAL EDITING WORKFLOW:
 1. Check for CONTEXT about currently viewed page
 2. If user doesn't specify page, use the currently viewed page from context
 3. get_working_version(page_name) - Get/create working version
-4. read_file("working/pages/[page_name].html") - Read working version
-5. Make changes carefully to working version
-6. write_file("working/pages/[page_name].html", updated_content)
-7. Confirm: "I successfully modified [page_name] with [specific changes]"
+4. read_file("working/pages/[page_name].html") - Read the specific section you need to edit
+5. search_replace_in_file("working/pages/[page_name].html", old_text, new_text) - Make targeted change
+6. verify_file_completeness("working/pages/[page_name].html") - Ensure file wasn't truncated
+7. If verification fails, restore from get_working_version and try again
+8. Confirm: "I successfully modified [page_name] with [specific changes]"
+
+REFLECTION PROCESS - After each action, ask yourself:
+- "Did I edit the correct page that the user intended?"
+- "Did I use the currently viewed page context when appropriate?"
+- "Did I make the exact changes requested using surgical editing?"
+- "Is the file complete and not truncated (verify_file_completeness)?"
+- "Should I use search_replace_in_file instead of write_file?"
 
 AVAILABLE TOOLS:
 - list_pages() - Show all pages (happy, about, lawyer-now, etc.)
 - get_working_version(page_name) - Create working copy for editing
-- read_file() - Read any file content
-- write_file() - Write/update files  
+- read_file() - Read any file content  
+- search_replace_in_file(file, old_text, new_text) - PREFERRED for edits - surgical replacement
+- verify_file_completeness(file) - Check file isn't truncated after edits
+- write_file() - Write/update files (USE SPARINGLY - only for new files)
 - deploy_working_version(page_name) - Deploy working version to live site
 - check_git_status() - Check uncommitted changes with detailed file list
 - commit_current_page(page_name) - Commit & push only the current page
@@ -378,9 +476,12 @@ AVAILABLE TOOLS:
 - git_commit_and_push() - Commit & push ALL changes (use sparingly)
 
 IMPORTANT:
+- ALWAYS use search_replace_in_file for edits instead of rewriting entire files
 - Use currently viewed page context to avoid asking unnecessary questions
 - NEVER commit changes unless user explicitly asks
+- ALWAYS verify file completeness after edits to prevent truncation
 - ALWAYS state which page you modified and what changes you made
+- If search_replace_in_file fails, read more context around the target area
 - Preserve all existing HTML structure"""
 
     return create_react_agent(model, tools, prompt=system_prompt)
