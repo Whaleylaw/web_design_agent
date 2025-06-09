@@ -65,8 +65,19 @@ if "agent" not in st.session_state:
             # Load working version content for immediate display
             working_file = WORKING_DIR / f"{main_page}.html"
             if working_file.exists():
-                with open(working_file, 'r', encoding='utf-8') as f:
-                    st.session_state.working_page_content = f.read()
+                try:
+                    with open(working_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        st.session_state.working_page_content = content
+                        st.session_state.last_update = str(time.time())
+                        # Debug info for initialization
+                        print(f"🔍 Initialized with {len(content)} characters for {main_page}")
+                except Exception as e:
+                    print(f"❌ Error reading working file during init: {e}")
+                    st.session_state.working_page_content = None
+            else:
+                print(f"❌ Working file not found during init: {working_file}")
+                st.session_state.working_page_content = None
         else:
             st.session_state.current_page = None
             
@@ -342,6 +353,18 @@ if "current_page" in st.session_state and st.session_state.current_page:
                 # Show first 200 chars of content
                 if working_content:
                     st.text_area("Content preview (first 200 chars):", working_content[:200], height=100)
+                    
+                    # Test if HTML is valid
+                    if working_content.strip().startswith('<!DOCTYPE') or working_content.strip().startswith('<html'):
+                        st.success("✅ Content appears to be valid HTML")
+                    else:
+                        st.warning("⚠️ Content may not be valid HTML")
+                    
+                    # Test iframe button
+                    if st.button("🧪 Test Iframe Display"):
+                        st.write("Testing iframe with simple content:")
+                        test_content = "<html><body><h1>Test Content</h1><p>This is a test.</p></body></html>"
+                        components.html(test_content, height=200, scrolling=True)
                 
                 # Force reload button
                 if st.button("🔄 Force Reload Working Version"):
@@ -356,21 +379,11 @@ if "current_page" in st.session_state and st.session_state.current_page:
             
             # Display working version in large iframe
             if working_content:
-                # Create a unique container that forces refresh when content changes
+                # Simple approach - just display the content with a unique comment at the end
                 timestamp = st.session_state.get('last_update', str(time.time()))
-                content_hash = hash(working_content[:1000])  # Hash first 1000 chars for uniqueness
-                
-                # Use a unique container to force iframe refresh
-                iframe_container = st.container()
-                with iframe_container:
-                    # Add a unique HTML comment and meta tag to force iframe refresh
-                    working_content_with_refresh = f"""
-<!-- Refresh ID: {timestamp}_{content_hash} -->
-<meta name="cache-control" content="no-cache">
-<meta name="expires" content="0">
-{working_content}
-"""
-                    components.html(working_content_with_refresh, height=900, scrolling=True)
+                # Add comment at the END to avoid breaking HTML structure
+                display_content = working_content + f"\n<!-- Last updated: {timestamp} -->"
+                components.html(display_content, height=900, scrolling=True)
             else:
                 st.warning("❌ No working content loaded!")
                 st.info("Try clicking 'Force Reload Working Version' in the debug section above.")
