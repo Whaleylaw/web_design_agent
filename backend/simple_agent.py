@@ -12,7 +12,7 @@ from typing import List
 from dotenv import load_dotenv
 
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_anthropic import ChatAnthropic
 from langgraph.prebuilt import create_react_agent
 from langgraph.store.memory import InMemoryStore
 
@@ -32,16 +32,22 @@ def setup_langsmith_tracing():
         print(f"⚠️ LangSmith setup failed: {e}")
         return False
 
+def setup_langgraph_config():
+    """Setup LangGraph configuration"""
+    os.environ["LANGGRAPH_DEFAULT_RECURSION_LIMIT"] = "50"
+    print("✅ LangGraph recursion limit set to 50")
+
 setup_langsmith_tracing()
+setup_langgraph_config()
 
 # Project paths  
 PROJECT_ROOT = Path.cwd()
 DEPLOY_DIR = PROJECT_ROOT / "deploy" / "public"  # Live pages that Netlify serves
 WORKING_DIR = PROJECT_ROOT / "working" / "pages"  # Working versions for editing
 
-def get_model(model_name: str = "gpt-4o-mini"):
-    """Get OpenAI model"""
-    return ChatOpenAI(model=model_name, temperature=0.1)
+def get_model(model_name: str = "claude-sonnet-4-20250514"):
+    """Get Claude model"""
+    return ChatAnthropic(model=model_name, temperature=0.1)
 
 @tool
 def read_file(file_path: str) -> str:
@@ -406,86 +412,100 @@ def deploy_working_version(page_name: str) -> str:
     except Exception as e:
         return f"❌ Error deploying working version: {str(e)}"
 
+@tool
+def get_page_context(page_name: str) -> str:
+    """
+    Get page context and layout information to help understand what user is referring to.
+    
+    Args:
+        page_name: Name of the page (e.g., 'index', 'about', 'lawyer-incorporated')
+    
+    Returns:
+        Detailed page context with element mappings and layout description
+    """
+    project_root = Path(__file__).parent.parent
+    context_dir = project_root / "page_contexts"
+    context_file = context_dir / f"{page_name}_context.md"
+    
+    if not context_file.exists():
+        return f"Context file not found for page '{page_name}'. Available pages: {[f.stem.replace('_context', '') for f in context_dir.glob('*_context.md')]}"
+    
+    try:
+        with open(context_file, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        return f"Error reading context file: {e}"
+
 def create_simple_agent():
-    """Create a simple agent with just essential tools."""
+    """Create the simple web design agent with enhanced page context understanding"""
+    # Initialize model
     model = get_model()
     
+    # Define tools - include the new page context tool
     tools = [
-        read_file,
+        get_working_version,
+        deploy_working_version, 
         search_replace_in_file,
         verify_file_completeness,
-        write_file, 
         list_pages,
-        get_working_version,
-        deploy_working_version,
-        git_commit_and_push,
-        commit_specific_files,
+        check_git_status,
         commit_current_page,
-        check_git_status
+        commit_specific_files,
+        git_commit_and_push,
+        get_page_context  # Add the new context tool
     ]
-    
-    system_prompt = """You are a precise web design agent that edits HTML pages for Netlify deployment.
 
-CRITICAL EDITING APPROACH:
-🎯 ALWAYS use surgical edits instead of rewriting entire files
-📖 PREFER search_replace_in_file over write_file for all changes
-🔍 ALWAYS verify file completeness after any edit
+    # Updated system prompt with page context guidance
+    system_prompt = """You are a web design agent helping users modify HTML pages.
+
+WORKFLOW:
+1. When user mentions a page or asks to work on a page, immediately call get_page_context() to understand the page layout
+2. When user describes page elements (like "upper left corner", "main heading", etc.), refer to the page context to find the exact HTML
+3. Always use surgical editing with search_replace_in_file() for targeted changes
+4. Never rewrite entire files - use precise search and replace operations
+5. Always verify file completeness after edits
+
+PAGE CONTEXT UNDERSTANDING:
+- Always call get_page_context(page_name) when working on a page
+- Use the element mappings to find what user is describing
+- Pay attention to the "Common User Descriptions" section in context
+- When user says "upper left corner", check header section first
+- When user mentions specific text, use the element mapping to locate it
 
 CRITICAL ACCURACY RULES:
-1. 🎯 ALWAYS check if user is viewing a page in the canvas (CONTEXT message)
-2. 📖 ALWAYS read the file first before making ANY changes  
-3. ✅ ALWAYS verify you're editing the correct page after reading
-4. 🔧 PREFER surgical edits with search_replace_in_file over full file rewrites
-5. 🔍 ALWAYS verify file completeness after edits to catch truncation
-6. 🔄 ALWAYS double-check your work using reflection
+- Use page context to understand exactly what user is referring to
+- Search for exact text matches in the element mappings first
+- Always verify you're editing the correct element by checking context
+- Use surgical edits only - never rewrite entire files
 
-PAGE CONTEXT AWARENESS:
-- If user message includes "CONTEXT: User is currently viewing page 'X'", use that page when no specific page is mentioned
-- When user says "change the background" without specifying a page, use the currently viewed page
-- When user says "add a 😊" without specifying a page, use the currently viewed page
-- Only ask for page clarification if no page is specified AND no page is currently being viewed
+REFLECTION PROCESS:
+After each edit:
+1. Did I use the page context to find the correct element?
+2. Did I make a surgical edit to the exact right location?
+3. Is the file complete and not truncated?
+4. Did I change what the user actually requested?
 
-SURGICAL EDITING WORKFLOW:
-1. Check for CONTEXT about currently viewed page
-2. If user doesn't specify page, use the currently viewed page from context
-3. get_working_version(page_name) - Get/create working version
-4. read_file("working/pages/[page_name].html") - Read the specific section you need to edit
-5. search_replace_in_file("working/pages/[page_name].html", old_text, new_text) - Make targeted change
-6. verify_file_completeness("working/pages/[page_name].html") - Ensure file wasn't truncated
-7. If verification fails, restore from get_working_version and try again
-8. Confirm: "I successfully modified [page_name] with [specific changes]"
+AVAILABLE PAGES: index, about, happy, lawyer-now, lawyer-incorporated, color-test, test
 
-REFLECTION PROCESS - After each action, ask yourself:
-- "Did I edit the correct page that the user intended?"
-- "Did I use the currently viewed page context when appropriate?"
-- "Did I make the exact changes requested using surgical editing?"
-- "Is the file complete and not truncated (verify_file_completeness)?"
-- "Should I use search_replace_in_file instead of write_file?"
+Remember: Use get_page_context() to understand page layout before making any changes."""
 
-AVAILABLE TOOLS:
-- list_pages() - Show all pages (happy, about, lawyer-now, etc.)
-- get_working_version(page_name) - Create working copy for editing
-- read_file() - Read any file content  
-- search_replace_in_file(file, old_text, new_text) - PREFERRED for edits - surgical replacement
-- verify_file_completeness(file) - Check file isn't truncated after edits
-- write_file() - Write/update files (USE SPARINGLY - only for new files)
-- deploy_working_version(page_name) - Deploy working version to live site
-- check_git_status() - Check uncommitted changes with detailed file list
-- commit_current_page(page_name) - Commit & push only the current page
-- commit_specific_files(files, message) - Commit & push specific files (comma-separated)
-- git_commit_and_push() - Commit & push ALL changes (use sparingly)
-
-IMPORTANT:
-- ALWAYS use search_replace_in_file for edits instead of rewriting entire files
-- Use currently viewed page context to avoid asking unnecessary questions
-- NEVER commit changes unless user explicitly asks
-- ALWAYS verify file completeness after edits to prevent truncation
-- ALWAYS state which page you modified and what changes you made
-- If search_replace_in_file fails, read more context around the target area
-- Preserve all existing HTML structure"""
-
-    return create_react_agent(model, tools, prompt=system_prompt)
+    # Create agent with recursion limit applied via config
+    agent = create_react_agent(model, tools, prompt=system_prompt)
+    
+    # Wrapper class to automatically apply recursion limit
+    class AgentWithConfig:
+        def __init__(self, agent):
+            self.agent = agent
+            
+        def invoke(self, inputs, config=None):
+            # Merge user config with our default recursion limit
+            merged_config = {"recursion_limit": 50}
+            if config:
+                merged_config.update(config)
+            return self.agent.invoke(inputs, config=merged_config)
+    
+    return AgentWithConfig(agent)
 
 if __name__ == "__main__":
     agent = create_simple_agent()
-    print("✅ Simple web design agent created!") 
+    print("✅ Simple web design agent created with page context support!") 

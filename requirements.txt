@@ -1,5 +1,6 @@
 # Core LangGraph dependencies
 langgraph==0.4.5
+langchain-anthropic==0.3.8
 langchain-openai==0.3.18
 langchain-core==0.3.61
 langgraph-checkpoint-sqlite==2.0.10
