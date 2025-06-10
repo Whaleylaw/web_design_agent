@@ -102,8 +102,8 @@ with st.sidebar:
     if st.button("📊 Check Git Status", use_container_width=True):
         with st.spinner("Checking git status..."):
             try:
-                from backend.simple_agent import check_git_status
-                result = check_git_status.invoke({})
+                from backend.git_utils import ui_check_git_status
+                result = ui_check_git_status()
                 st.session_state.messages.append(("user", "Check git status"))
                 st.session_state.messages.append(("assistant", result))
                 st.rerun()
@@ -115,8 +115,8 @@ with st.sidebar:
         if st.button("🚀 Commit & Push All", use_container_width=True):
             with st.spinner("Committing and pushing all changes..."):
                 try:
-                    from backend.simple_agent import git_commit_and_push
-                    result = git_commit_and_push.invoke({"message": "Quick commit via UI"})
+                    from backend.git_utils import ui_commit_and_push_all
+                    result = ui_commit_and_push_all("Quick commit via UI")
                     st.session_state.messages.append(("user", "Commit and push all changes"))
                     st.session_state.messages.append(("assistant", result))
                     st.rerun()
@@ -129,11 +129,8 @@ with st.sidebar:
             if current_page:
                 with st.spinner(f"Committing {current_page} page..."):
                     try:
-                        from backend.simple_agent import commit_current_page
-                        result = commit_current_page.invoke({
-                            "page_name": current_page,
-                            "message": f"Update {current_page} page via UI"
-                        })
+                        from backend.git_utils import ui_commit_current_page
+                        result = ui_commit_current_page(current_page, f"Update {current_page} page via UI")
                         st.session_state.messages.append(("user", f"Commit {current_page} page only"))
                         st.session_state.messages.append(("assistant", result))
                         st.rerun()
