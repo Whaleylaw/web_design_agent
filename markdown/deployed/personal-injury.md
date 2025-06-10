@@ -1,10 +1,13 @@
-# Personal Injury - LawyersInc
+# Personal Injury - Lawyer Incorporated
 
-## Headings
+## Navigation
+- **Logo**: Lawyer Incorporated
+- **Links**: 
+  - [Home](index.html)
+  - [About](about.html)
+  - [Contact](#contact)
+
+## Main Content
 # Personal Injury
 
-## Links
-[Home](index.html)
-[About](about.html)
-[Contact](#contact)
-
+This page focuses on personal injury legal services provided by Lawyer Incorporated.
