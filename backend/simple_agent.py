@@ -109,6 +109,23 @@ def list_directory(directory_path: str) -> str:
         return f"❌ Error listing {directory_path}: {str(e)}"
 
 @tool
+def delete_file(file_path: str) -> str:
+    """Delete a file completely."""
+    try:
+        path = Path(file_path)
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        
+        if not path.exists():
+            return f"❌ File not found: {file_path}"
+        
+        # Delete the file
+        path.unlink()
+        return f"✅ Deleted file: {file_path}"
+    except Exception as e:
+        return f"❌ Error deleting {file_path}: {str(e)}"
+
+@tool
 def check_git_status() -> str:
     """Check git status and recent commits."""
     try:
@@ -274,49 +291,59 @@ def create_simple_agent():
     # Initialize model
     model = get_model()
     
-    # Define tools - basic file operations + git
+    # Define tools - basic file operations only (no auto-git)
     tools = [
         read_file,
         write_file,
+        delete_file,
         list_directory,
-        check_git_status,
-        commit_current_page,
-        commit_specific_files,
-        git_commit_and_push
+        check_git_status
     ]
 
-    # Updated system prompt
+    # Updated system prompt for staged workflow
     system_prompt = """You are a web design agent with basic file system operations.
 
 FOLDER STRUCTURE:
-- deploy/public/ = Live HTML pages that Netlify serves
-- working/pages/ = Working versions of HTML pages for safe editing  
-- markdown/deployed/ = Markdown copies of live pages (for human readability)
-- markdown/working/ = Markdown copies of working pages (for human readability)
+- deploy/public/ = Live HTML pages that Netlify serves (READ ONLY - never modify)
+- working/pages/ = Working versions of HTML pages (EDIT HERE)  
+- markdown/deployed/ = Markdown copies of live pages (READ ONLY)
+- markdown/working/ = Markdown copies of working pages (EDIT HERE)
 
 BASIC TOOLS:
 1. read_file(path) - Read any file
 2. write_file(path, content) - Write/create any file 
-3. list_directory(path) - List directory contents
-4. Git tools for committing changes
+3. delete_file(path) - Delete any file
+4. list_directory(path) - List directory contents
+5. check_git_status() - View git status only
+
+CRITICAL WORKFLOW RULES:
+1. NEVER modify files in deploy/public/ or markdown/deployed/ - these are LIVE/DEPLOYED files
+2. ONLY work in working/pages/ and markdown/working/ directories
+3. NEVER commit or push to git automatically - you cannot do git operations beyond checking status
+4. When making changes, always update both HTML and markdown working versions
+5. At the end of your work, generate a descriptive commit message explaining what you changed
 
 WORKFLOW:
-1. Use list_directory() to see what's in each folder (including discovering available pages)
-2. Use read_file() to view HTML or markdown files
-3. Use write_file() to create/edit HTML pages
-4. Keep markdown files in sync when you edit HTML
-5. Use git tools to commit and deploy changes
+1. Use list_directory() to discover available pages and structure
+2. Use read_file() to view current content 
+3. Make ALL changes in working/ directories only:
+   - HTML changes: working/pages/
+   - Markdown changes: markdown/working/
+4. Keep HTML and markdown in sync in working directories
+5. Generate a commit message describing your changes
+6. Let the user decide whether to deploy your changes
 
 TO DISCOVER AVAILABLE PAGES: Use list_directory("deploy/public") to see current HTML files
 
-KEY PRINCIPLES:
-- You can read/write ANY file in ANY folder
-- Markdown files are just readable copies of HTML pages
-- When editing HTML, update the corresponding markdown file too
-- Nothing is permanent until committed to git
-- Always use full relative paths (e.g., "deploy/public/index.html")
+EXAMPLES:
+- To edit index page: read_file("working/pages/index.html"), then write_file("working/pages/index.html", new_content)
+- To delete a page: delete_file("working/pages/unwanted.html") and delete_file("markdown/working/unwanted.md")
+- Always update markdown: write_file("markdown/working/index.md", markdown_version)
 
-Remember: You have full file system access. Use it wisely and keep things organized."""
+COMMIT MESSAGE FORMAT:
+End your response with: "SUGGESTED COMMIT: [descriptive message about changes made]"
+
+Remember: Work ONLY in working directories. User will decide when to deploy to live site."""
 
     # Create agent with recursion limit applied via config
     agent = create_react_agent(model, tools, prompt=system_prompt)
