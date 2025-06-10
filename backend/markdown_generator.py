@@ -86,7 +86,10 @@ def generate_markdown_for_page(page_name: str, source_type: str = "deployed") ->
         if source_type == "deployed":
             source_file = DEPLOY_DIR / f"{page_name}.html"
         else:  # working
+            # Check direct working file first, then pages subdirectory
             source_file = WORKING_DIR / f"{page_name}.html"
+            if not source_file.exists():
+                source_file = WORKING_DIR / "pages" / f"{page_name}.html"
         
         if not source_file.exists():
             return f"❌ Source file not found: {source_file}"
@@ -123,12 +126,25 @@ def generate_all_markdown() -> str:
             result = generate_markdown_for_page(page_name, "deployed")
             results.append(result)
     
-    # Generate for working pages
+    # Generate for working pages - check both working/ and working/pages/
+    working_pages = set()
     if WORKING_DIR.exists():
+        # Direct working files
         for html_file in WORKING_DIR.glob("*.html"):
             page_name = html_file.stem
-            result = generate_markdown_for_page(page_name, "working")
-            results.append(result)
+            working_pages.add(page_name)
+        
+        # Working pages subdirectory
+        pages_dir = WORKING_DIR / "pages"
+        if pages_dir.exists():
+            for html_file in pages_dir.glob("*.html"):
+                page_name = html_file.stem
+                working_pages.add(page_name)
+    
+    # Generate markdown for all working pages found
+    for page_name in working_pages:
+        result = generate_markdown_for_page(page_name, "working")
+        results.append(result)
     
     return "\n".join(results)
 
