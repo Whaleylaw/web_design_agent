@@ -126,6 +126,38 @@ def delete_file(file_path: str) -> str:
         return f"❌ Error deleting {file_path}: {str(e)}"
 
 @tool
+def copy_file(source_path: str, destination_path: str) -> str:
+    """Copy a file efficiently from source to destination (like copy/paste)."""
+    try:
+        import shutil
+        
+        # Convert to Path objects
+        source = Path(source_path)
+        dest = Path(destination_path)
+        
+        # Make absolute if needed
+        if not source.is_absolute():
+            source = PROJECT_ROOT / source
+        if not dest.is_absolute():
+            dest = PROJECT_ROOT / dest
+        
+        if not source.exists():
+            return f"❌ Source file not found: {source_path}"
+        
+        # Create destination directory if needed
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Efficient file copy (handles large files well)
+        shutil.copy2(source, dest)
+        
+        # Get file size for confirmation
+        size = dest.stat().st_size
+        return f"✅ Copied {source_path} → {destination_path} ({size:,} bytes)"
+        
+    except Exception as e:
+        return f"❌ Error copying {source_path} → {destination_path}: {str(e)}"
+
+@tool
 def check_git_status() -> str:
     """Check git status and recent commits."""
     try:
@@ -296,6 +328,7 @@ def create_simple_agent():
         read_file,
         write_file,
         delete_file,
+        copy_file,
         list_directory,
         check_git_status
     ]
@@ -313,8 +346,9 @@ BASIC TOOLS:
 1. read_file(path) - Read any file
 2. write_file(path, content) - Write/create any file 
 3. delete_file(path) - Delete any file
-4. list_directory(path) - List directory contents
-5. check_git_status() - View git status only
+4. copy_file(source, destination) - Efficiently copy files (like copy/paste)
+5. list_directory(path) - List directory contents
+6. check_git_status() - View git status only
 
 CRITICAL WORKFLOW RULES:
 1. NEVER modify files in deploy/public/ or markdown/deployed/ - these are LIVE/DEPLOYED files
@@ -338,6 +372,8 @@ TO DISCOVER AVAILABLE PAGES: Use list_directory("deploy/public") to see current 
 EXAMPLES:
 - To edit index page: read_file("working/pages/index.html"), then write_file("working/pages/index.html", new_content)
 - To delete a page: delete_file("working/pages/unwanted.html") and delete_file("markdown/working/unwanted.md")
+- To deploy uploaded page: copy_file("working/pages/new-page.html", "deploy/public/new-page.html")
+- To deploy large files efficiently: use copy_file() instead of read_file() + write_file()
 - Always update markdown: write_file("markdown/working/index.md", markdown_version)
 
 COMMIT MESSAGE FORMAT:

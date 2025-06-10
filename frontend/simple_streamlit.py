@@ -319,6 +319,61 @@ with st.sidebar:
     
     st.divider()
     
+    # File Upload Section
+    st.subheader("📤 Upload Page")
+    uploaded_file = st.file_uploader(
+        "Upload HTML page to working directory",
+        type=['html', 'htm'],
+        help="Upload an external HTML file to add to the site"
+    )
+    
+    if uploaded_file is not None:
+        # Get filename and clean it
+        filename = uploaded_file.name
+        clean_filename = filename.replace(' ', '-').lower()
+        if not clean_filename.endswith('.html'):
+            clean_filename += '.html'
+        
+        col_upload, col_cancel = st.columns(2)
+        with col_upload:
+            if st.button("📥 Add to Working", use_container_width=True, type="primary"):
+                try:
+                    # Read uploaded file content
+                    content = uploaded_file.read().decode('utf-8')
+                    
+                    # Save to working directory
+                    working_file_path = WORKING_DIR / clean_filename
+                    working_file_path.write_text(content, encoding='utf-8')
+                    
+                    # Generate corresponding markdown file
+                    from backend.markdown_generator import html_to_markdown
+                    markdown_content = html_to_markdown(content)
+                    markdown_file_path = project_root / "markdown" / "working" / clean_filename.replace('.html', '.md')
+                    markdown_file_path.write_text(markdown_content, encoding='utf-8')
+                    
+                    st.session_state.messages.append(("system", f"✅ Uploaded '{clean_filename}' to working directory\n📄 Created corresponding markdown file\n📋 File ready for review in pending changes"))
+                    st.success(f"✅ Successfully added {clean_filename} to working directory!")
+                    st.rerun()
+                    
+                except Exception as e:
+                    st.error(f"❌ Upload failed: {e}")
+        
+        with col_cancel:
+            if st.button("❌ Cancel", use_container_width=True):
+                st.rerun()
+        
+        # Show file preview
+        if uploaded_file:
+            with st.expander("👀 Preview file content"):
+                try:
+                    content_preview = uploaded_file.read().decode('utf-8')
+                    st.code(content_preview[:1000] + "..." if len(content_preview) > 1000 else content_preview, language='html')
+                    uploaded_file.seek(0)  # Reset file pointer
+                except Exception as e:
+                    st.error(f"Preview error: {e}")
+    
+    st.divider()
+    
     # Page Controls
     st.subheader("📝 Page Controls")
     available_pages = get_available_pages()
@@ -462,6 +517,11 @@ with st.sidebar:
     - "Delete the contact page" ← now properly deletes files
     - "Create a new services page" ← creates in working directory
     - "Make the text larger" ← edits current page
+    
+    **Upload External Pages:**
+    - Use "📤 Upload Page" to add HTML files from outside the system
+    - Files go to working directory and show as pending changes
+    - Agent can then edit/improve uploaded pages
     
     **Safety Features:**
     - ✅ All changes happen in working directory first
