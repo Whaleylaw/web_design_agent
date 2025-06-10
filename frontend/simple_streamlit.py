@@ -15,8 +15,59 @@ import streamlit.components.v1 as components
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from backend.simple_agent import create_simple_agent, DEPLOY_DIR, WORKING_DIR
+from backend.simple_agent import create_simple_agent
 from langchain_core.messages import HumanMessage, AIMessage
+
+# Define directory paths locally since agent no longer exports them
+DEPLOY_DIR = project_root / "deploy" / "public"
+WORKING_DIR = project_root / "working" / "pages"
+
+def get_working_version(page_name):
+    """Create working version by copying from deploy directory if it doesn't exist."""
+    try:
+        # Determine source file path
+        source_file = DEPLOY_DIR / f"{page_name}.html"
+        
+        if not source_file.exists():
+            return f"❌ Page '{page_name}' not found in deploy directory"
+        
+        # Create working directory if needed
+        WORKING_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # Working file path
+        working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
+        
+        # If working version doesn't exist, copy from deploy
+        if not working_file.exists():
+            import shutil
+            shutil.copy2(source_file, working_file)
+            return f"✅ Created working version: {working_file}"
+        
+        return f"✅ Working version exists: {working_file}"
+        
+    except Exception as e:
+        return f"❌ Error getting working version: {str(e)}"
+
+def deploy_working_version(page_name):
+    """Deploy working version back to live site (copy working → deploy)."""
+    try:
+        # Working file path
+        working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
+        
+        if not working_file.exists():
+            return f"❌ No working version found for '{page_name}'"
+        
+        # Destination file path
+        dest_file = DEPLOY_DIR / f"{page_name}.html"
+        
+        # Copy working version to deploy
+        import shutil
+        shutil.copy2(working_file, dest_file)
+        
+        return f"✅ Deployed working version of '{page_name}' to live site: {dest_file}"
+        
+    except Exception as e:
+        return f"❌ Error deploying working version: {str(e)}"
 
 # Page config
 st.set_page_config(
@@ -59,8 +110,7 @@ if "agent" not in st.session_state:
             st.session_state.current_page = main_page
             
             # Create working version automatically
-            from backend.simple_agent import get_working_version
-            get_working_version.invoke({"page_name": main_page})
+            get_working_version(main_page)
             
             # Load working version content for immediate display
             working_file = WORKING_DIR / f"{main_page}.html"
@@ -91,8 +141,11 @@ with st.sidebar:
     if st.button("📋 List Pages", use_container_width=True):
         with st.spinner("Listing pages..."):
             try:
-                from backend.simple_agent import list_pages
-                result = list_pages.invoke({})
+                # Use the agent's list_directory tool
+                response = st.session_state.agent.invoke({
+                    "messages": [HumanMessage(content="List all pages in deploy/public directory")]
+                })
+                result = response['messages'][-1].content if response and 'messages' in response else "No response"
                 st.session_state.messages.append(("user", "List pages"))
                 st.session_state.messages.append(("assistant", result))
                 st.rerun()
@@ -168,8 +221,7 @@ with st.sidebar:
                 # Initialize working content - get working version first
                 with st.spinner(f"Loading {page_name}..."):
                     try:
-                        from backend.simple_agent import get_working_version
-                        get_working_version.invoke({"page_name": page_name})
+                        get_working_version(page_name)
                         
                         # Load working version content
                         working_file = WORKING_DIR / f"{page_name.replace('/', '_')}.html"
@@ -190,8 +242,7 @@ with st.sidebar:
             if page_name and page_name != "No pages found" and page_name != "Error loading pages":
                 with st.spinner(f"Deploying {page_name}..."):
                     try:
-                        from backend.simple_agent import deploy_working_version
-                        result = deploy_working_version.invoke({"page_name": page_name})
+                        result = deploy_working_version(page_name)
                         st.session_state.messages.append(("user", f"Deploy {page_name}"))
                         st.session_state.messages.append(("assistant", result))
                         st.rerun()
