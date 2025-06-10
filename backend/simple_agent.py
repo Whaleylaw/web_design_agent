@@ -15,6 +15,8 @@ from langchain_core.tools import tool
 from langchain_anthropic import ChatAnthropic
 from langgraph.prebuilt import create_react_agent
 from langgraph.store.memory import InMemoryStore
+from backend.markdown_generator import generate_markdown_for_page, generate_all_markdown
+import shutil
 
 # Load environment
 load_dotenv()
@@ -436,12 +438,190 @@ def get_page_context(page_name: str) -> str:
     except Exception as e:
         return f"Error reading context file: {e}"
 
+@tool
+def create_page(page_name: str, title: str = None, heading: str = None, content: str = None) -> str:
+    """
+    Create a new HTML page with basic structure.
+    
+    Args:
+        page_name: Name of the page (without .html extension)
+        title: Page title (defaults to page_name)
+        heading: Main heading (defaults to title)
+        content: Additional content to include (optional)
+    
+    Returns:
+        Success message with file path
+    """
+    try:
+        if not title:
+            title = page_name.replace('-', ' ').replace('_', ' ').title()
+        if not heading:
+            heading = title
+        
+        # Create basic HTML structure
+        html_content = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} - LawyersInc</title>
+    <style>
+        :root {{
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #e74c3c;
+            --text: #333;
+            --light-bg: #f8f9fa;
+        }}
+
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--light-bg);
+        }}
+
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }}
+
+        h1 {{
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }}
+
+        .back-link {{
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }}
+
+        .back-link:hover {{
+            text-decoration: underline;
+        }}
+
+        .content {{
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        <div class="content">
+            <h1>{heading}</h1>
+            {content or '<p>This page is under construction. More information coming soon.</p>'}
+        </div>
+    </div>
+</body>
+</html>'''
+
+        # Create in deploy directory
+        deploy_file = DEPLOY_DIR / f"{page_name}.html"
+        with open(deploy_file, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        # Also create working version
+        working_file = WORKING_DIR / f"{page_name}.html"
+        with open(working_file, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        return f"✅ Created new page: {page_name}.html\\n📁 Deploy: {deploy_file}\\n📁 Working: {working_file}\\n🎯 Ready to edit and deploy!"
+        
+    except Exception as e:
+        return f"❌ Error creating page: {str(e)}"
+
+@tool
+def read_page_as_markdown(page_name: str, version: str = "working") -> str:
+    """
+    Read a page as markdown to see it like a human would.
+    
+    Args:
+        page_name: Name of the page
+        version: "deployed" or "working"
+    
+    Returns:
+        Markdown content of the page
+    """
+    try:
+        markdown_file = PROJECT_ROOT / "markdown" / version / f"{page_name}.md"
+        
+        if not markdown_file.exists():
+            # Generate it if it doesn't exist
+            result = generate_markdown_for_page(page_name, version)
+            if "❌" in result:
+                return result
+        
+        with open(markdown_file, 'r', encoding='utf-8') as f:
+            return f.read()
+        
+    except Exception as e:
+        return f"❌ Error reading markdown: {str(e)}"
+
+@tool
+def update_markdown_after_html_change(page_name: str) -> str:
+    """
+    Update the working markdown after changing HTML.
+    Simple function to keep markdown in sync with HTML changes.
+    """
+    try:
+        return generate_markdown_for_page(page_name, "working")
+    except Exception as e:
+        return f"❌ Error updating markdown: {str(e)}"
+
+@tool
+def undo_page_changes(page_name: str) -> str:
+    """
+    Simple undo: copy deployed version to working version (both HTML and markdown).
+    This reverts all changes back to the live/deployed state.
+    """
+    try:
+        # Copy HTML: deployed → working
+        deployed_html = DEPLOY_DIR / f"{page_name}.html"
+        working_html = WORKING_DIR / f"{page_name}.html"
+        
+        if not deployed_html.exists():
+            return f"❌ Deployed page '{page_name}' not found"
+        
+        WORKING_DIR.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(deployed_html, working_html)
+        
+        # Update working markdown to match
+        markdown_result = generate_markdown_for_page(page_name, "working")
+        
+        return f"✅ Reverted '{page_name}' to deployed version\n📁 HTML: {working_html}\n📝 {markdown_result}"
+        
+    except Exception as e:
+        return f"❌ Error undoing changes: {str(e)}"
+
 def create_simple_agent():
-    """Create the simple web design agent with enhanced page context understanding"""
+    """Create the web design agent with enhanced page context understanding"""
+    # Load environment variables
+    load_dotenv()
+    
+    # Setup tracing and configuration
+    setup_langsmith_tracing()
+    setup_langgraph_config()
+    
     # Initialize model
     model = get_model()
     
-    # Define tools - include the new page context tool
+    # Define tools - keep it simple
     tools = [
         get_working_version,
         deploy_working_version, 
@@ -452,42 +632,41 @@ def create_simple_agent():
         commit_current_page,
         commit_specific_files,
         git_commit_and_push,
-        get_page_context  # Add the new context tool
+        get_page_context,
+        create_page,
+        read_page_as_markdown,  # Read pages like humans do
+        update_markdown_after_html_change,  # Keep markdown in sync
+        undo_page_changes  # Simple undo function
     ]
 
-    # Updated system prompt with page context guidance
+    # Updated system prompt - keep it simple
     system_prompt = """You are a web design agent helping users modify HTML pages.
 
-WORKFLOW:
-1. When user mentions a page or asks to work on a page, immediately call get_page_context() to understand the page layout
-2. When user describes page elements (like "upper left corner", "main heading", etc.), refer to the page context to find the exact HTML
-3. Always use surgical editing with search_replace_in_file() for targeted changes
-4. Never rewrite entire files - use precise search and replace operations
-5. Always verify file completeness after edits
+SIMPLE WORKFLOW:
+1. To see a page like a human: use read_page_as_markdown(page_name, "deployed" or "working")
+2. To make changes: use search_replace_in_file() on HTML files
+3. After HTML changes: call update_markdown_after_html_change() to keep markdown in sync
+4. To undo changes: use undo_page_changes() - copies deployed → working
+5. When user asks to CREATE a new page: use create_page() first, then link it from existing pages
 
-PAGE CONTEXT UNDERSTANDING:
-- Always call get_page_context(page_name) when working on a page
-- Use the element mappings to find what user is describing
-- Pay attention to the "Common User Descriptions" section in context
-- When user says "upper left corner", check header section first
-- When user mentions specific text, use the element mapping to locate it
+UNDERSTANDING PAGES:
+- Read markdown versions to see pages like humans do
+- Compare deployed vs working markdown to see what changed
+- Use page context for layout understanding when needed
+
+SIMPLE UNDO:
+- When user says "undo" or "revert": use undo_page_changes(page_name)
+- This copies deployed version to working version (both HTML and markdown)
 
 CRITICAL ACCURACY RULES:
-- Use page context to understand exactly what user is referring to
-- Search for exact text matches in the element mappings first
-- Always verify you're editing the correct element by checking context
-- Use surgical edits only - never rewrite entire files
+- Always use surgical edits with search_replace_in_file() 
+- Never rewrite entire files
+- Keep markdown in sync after HTML changes
+- Verify file completeness after edits
 
-REFLECTION PROCESS:
-After each edit:
-1. Did I use the page context to find the correct element?
-2. Did I make a surgical edit to the exact right location?
-3. Is the file complete and not truncated?
-4. Did I change what the user actually requested?
+AVAILABLE PAGES: index, about, happy, lawyer-now, lawyer-incorporated, color-test, test, personal-injury
 
-AVAILABLE PAGES: index, about, happy, lawyer-now, lawyer-incorporated, color-test, test
-
-Remember: Use get_page_context() to understand page layout before making any changes."""
+Remember: Keep it simple. Read markdown to see pages, edit HTML precisely, update markdown, undo by copying deployed → working."""
 
     # Create agent with recursion limit applied via config
     agent = create_react_agent(model, tools, prompt=system_prompt)
